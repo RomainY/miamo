@@ -15,7 +15,5 @@ final notificationServiceProvider = Provider<NotificationService>(
 final notificationSyncProvider = Provider<void>((ref) {
   final service = ref.watch(notificationServiceProvider);
   final instances = ref.watch(instancesEnStockGlobalProvider);
-  instances.whenData((liste) {
-    service.resynchroniser(liste);
-  });
+  instances.whenData(service.resynchroniser);
 });

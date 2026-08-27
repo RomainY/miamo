@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'constants.dart';
 import '../theme/app_theme.dart';
+import 'constants.dart';
 
 /// Date/heure locale de déclenchement de la notification de péremption pour
 /// [datePeremption] ([joursAvantNotification] jours avant, à

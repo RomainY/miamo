@@ -148,7 +148,7 @@ class PlatRepository extends BaseRepository {
     if (repasLies.isNotEmpty) {
       throw const ReferenceActiveException(
         'Ce plat est utilisé par des repas planifiés : '
-        "annulez ou modifiez ces repas avant de le supprimer.",
+        'annulez ou modifiez ces repas avant de le supprimer.',
       );
     }
 
