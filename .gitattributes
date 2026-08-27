@@ -1,0 +1,49 @@
+# Normalise les fins de ligne : le dépôt stocke en LF, quel que soit le
+# réglage core.autocrlf de chaque poste (Windows compris). Évite les diffs
+# parasites et les warnings "LF will be replaced by CRLF".
+* text=auto eol=lf
+
+# Scripts qui doivent rester dans leur convention native
+*.bat        text eol=crlf
+*.cmd        text eol=crlf
+*.ps1        text eol=crlf
+*.sh         text eol=lf
+
+# Fichiers texte explicites (sécurité si la détection auto hésite)
+*.dart       text
+*.yaml       text
+*.yml        text
+*.json       text
+*.md         text
+*.gradle     text
+*.kts        text
+*.xml        text
+*.plist      text
+*.properties text
+*.pro        text
+Dockerfile   text
+
+# Binaires : jamais de conversion de fin de ligne ni de diff textuel
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+*.svg    binary
+*.ttf    binary
+*.otf    binary
+*.woff   binary
+*.woff2  binary
+*.jar    binary
+*.keystore binary
+*.jks    binary
+*.p12    binary
+*.pdf    binary
+*.xlsx   binary
+*.zip    binary
+
+# Généré : masqué dans les diffs GitHub, exclu des stats de langage
+*.g.dart        linguist-generated=true
+*.freezed.dart  linguist-generated=true
+pubspec.lock    linguist-generated=true
