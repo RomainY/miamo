@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -49,9 +51,10 @@ class NotificationService {
   /// réparatrice, et sans coût perceptible vu le volume attendu (dizaines
   /// d'instances, pas plus).
   ///
-  /// Échoue silencieusement (log console) si le plugin de notifications
-  /// n'est pas disponible sur la plateforme courante (ex. tests, desktop) :
-  /// une notification manquée ne doit jamais faire planter l'app.
+  /// Échoue silencieusement (trace `dart:developer`, non émise en release) si
+  /// le plugin de notifications n'est pas disponible sur la plateforme courante
+  /// (ex. tests, desktop) : une notification manquée ne doit jamais faire
+  /// planter l'app.
   Future<void> resynchroniser(List<InstanceFrigoDetail> instances) async {
     try {
       await _assurerInitialisation();
@@ -66,9 +69,13 @@ class NotificationService {
           datePeremption: datePeremption,
         );
       }
-    } catch (e) {
-      // ignore: avoid_print
-      print('NotificationService.resynchroniser a échoué : $e');
+    } catch (e, stack) {
+      developer.log(
+        'Resynchronisation des notifications échouée',
+        name: 'miamo.notifications',
+        error: e,
+        stackTrace: stack,
+      );
     }
   }
 
