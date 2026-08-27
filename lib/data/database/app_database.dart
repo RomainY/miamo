@@ -19,6 +19,10 @@ part 'app_database.g.dart';
     ArticlesCourse,
   ],
 )
+/// Base SQLite locale unique de l'application (fichier `app_frigo`, via
+/// `drift_flutter`). Aucune synchronisation distante. Le schéma est en
+/// version 1 ; toute évolution ultérieure devra incrémenter [schemaVersion]
+/// et ajouter un `onUpgrade` à [migration].
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -39,6 +43,9 @@ class AppDatabase extends _$AppDatabase {
     },
   );
 
+  /// Ouvre la base fichier dans le répertoire applicatif (résolu par
+  /// `path_provider`). Base **non chiffrée** : choix assumé pour le MVP, les
+  /// données stockées ne contenant aucun secret ni donnée personnelle sensible.
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'app_frigo');
   }

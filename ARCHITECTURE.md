@@ -4,6 +4,13 @@
 > l'état réel du code au commit initial, pas la cible.
 > Références croisées : `../Docs/documentation-technique.md`,
 > `../Docs/cahier-des-charges.md`.
+>
+> **Mise à jour (Phase 4)** : l'écran de gestion du catalogue produits, signalé
+> comme manquant en §6.1, a été implémenté pendant l'audit
+> (`produit_form_sheet.dart` + onglet « Produits » de `gerer_catalogue_page.dart`,
+> `produitsTousProvider`). Les mentions « aucun appel dans `lib/` » des §6.1/§6.2
+> concernant `archiver` / `desarchiver` / `supprimerDefinitivement` /
+> `previewSuppressionCascade` / `watchAll` ne sont donc plus d'actualité.
 
 ---
 
@@ -68,9 +75,11 @@ lib/
 ├── features/                     ── COUCHE PRÉSENTATION (une sous-arbo par feature) ──
 │   ├── frigo/presentation/
 │   │   ├── pages/                frigo_page, ajouter_produit_sheet, modifier_instance_sheet,
-│   │   │                         gerer_catalogue_page (catégories + zones)
+│   │   │                         gerer_catalogue_page (produits + catégories + zones),
+│   │   │                         produit_form_sheet (créer/modifier un Produit)
 │   │   ├── providers/            frigo_providers.dart : filtres (StateProvider), StreamProviders
-│   │   │                         (instances, catégories, zones, unités, produits actifs)
+│   │   │                         (instances, catégories, zones, unités, produits actifs,
+│   │   │                         produitsTousProvider pour l'écran catalogue)
 │   │   └── widgets/              category_chips_bar, expiration_warning_banner,
 │   │                             product_list_tile, urgence_indicator
 │   ├── planification/presentation/
@@ -285,10 +294,15 @@ simple et auto-réparatrice, acceptable vu le volume (dizaines d'instances).
 ## 6. Incohérences architecturales & code mort
 
 ### 6.1 Data layer en avance sur l'UI (fonctionnel, non « mort », mais non câblé)
+
+> ✅ **Résolu en Phase 4** : `archiver` / `desarchiver` / `supprimerDefinitivement` /
+> `previewSuppressionCascade` + `CascadeSuppressionProduit` et
+> `ProduitRepository.watchAll({categorieId})` (via `produitsTousProvider`) sont
+> désormais câblés dans l'onglet « Produits » de `gerer_catalogue_page.dart` +
+> `produit_form_sheet.dart`.
+
 | Élément | État | Remarque |
 |---|---|---|
-| `ProduitRepository.archiver` / `desarchiver` / `supprimerDefinitivement` / `previewSuppressionCascade` + `CascadeSuppressionProduit` | testés unitairement, **aucun appel dans `lib/`** | L'écran de **gestion du catalogue produits** (`cahier-des-charges.md §7.3` : lister / archiver / supprimer) **n'existe pas**. `gerer_catalogue_page` ne gère que catégories + zones. |
-| `ProduitRepository.watchAll({categorieId})` | non utilisé dans `lib/` | idem — prévu pour l'écran catalogue manquant. |
 | `ProduitRepository.marquerUtilise` | non utilisé dans `lib/` | `create` et `produitFrigo.create` mettent déjà `dateDerniereUtilisation` à jour eux-mêmes ; méthode redondante (chemin A « produit existant sélectionné » ne l'appelle jamais). |
 
 ### 6.2 Code non référencé (candidats à suppression ou à couvrir)
@@ -298,7 +312,7 @@ simple et auto-réparatrice, acceptable vu le volume (dizaines d'instances).
 | `RepasPlanifieRepository.watchProchains` (variante non-`Detail`) | `repas_planifie_repository.dart:39` | aucun |
 | `PlatRepository.watchIngredients` (variante Stream) | `plat_repository.dart:49` | aucun — l'UI utilise `getIngredients` (Future) |
 | `CategorieRepository.getAll` / `ZoneRepository.getAll` / `UniteRepository.getAll` | resp. `:21` / `:21` / `:19` | aucun — l'UI passe par les `watchAll` ou `getByTypeGrandeur` |
-| `UniteRepository.getByTypeGrandeur` | `unite_repository.dart:25` | aucun dans `lib/` (le filtrage par grandeur est refait à la main dans `ajouter_produit_sheet`) |
+| `UniteRepository.getByTypeGrandeur` | `unite_repository.dart:25` | aucun dans `lib/` (le filtrage par grandeur est refait à la main dans `ajouter_produit_sheet` et `produit_form_sheet`) |
 | `ArticleCourseRepository.watchAll` param `statut` | `article_course_repository.dart:25` | toujours appelé sans argument (le tri à acheter / acheté est refait dans `courses_page`) |
 | `UrgencePeremption` branche « date formatée » (`> 7 j`) | `date_utils.dart:57` | atteignable, mais `watchEnStock` n'affiche que le stock ; OK |
 
