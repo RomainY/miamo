@@ -7,6 +7,7 @@ import '../../../../data/database/app_database.dart';
 import '../../../../data/database/tables.dart';
 import '../../../../data/repositories/repository_providers.dart';
 import '../../../../shared/utils/exceptions.dart';
+import '../../../../shared/utils/quantite.dart';
 import '../../../../shared/widgets/nom_dialog.dart';
 import '../providers/frigo_providers.dart';
 
@@ -372,10 +373,7 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
 
   bool _peutValider() {
     if (_zoneId == null || _uniteId == null) return false;
-    if (double.tryParse(_quantiteController.text.replaceAll(',', '.')) ==
-        null) {
-      return false;
-    }
+    if (parseQuantite(_quantiteController.text) == null) return false;
     if (_nouveauProduit) {
       return _nomController.text.trim().isNotEmpty && _categorieId != null;
     }
@@ -383,14 +381,13 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
   }
 
   Future<void> _valider() async {
+    final quantite = parseQuantite(_quantiteController.text);
+    if (quantite == null) return;
+
     setState(() {
       _envoiEnCours = true;
       _erreur = null;
     });
-
-    final quantite = double.parse(
-      _quantiteController.text.replaceAll(',', '.'),
-    );
 
     try {
       int produitId;

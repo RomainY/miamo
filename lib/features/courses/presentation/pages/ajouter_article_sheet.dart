@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/utils/quantite.dart';
 import '../../../frigo/presentation/pages/ajouter_produit_sheet.dart'
     show quantiteInputFormatters;
 import '../../../frigo/presentation/providers/frigo_providers.dart';
@@ -141,18 +142,15 @@ class _AjouterArticleSheetState extends ConsumerState<_AjouterArticleSheet> {
   }
 
   bool _peutValider() {
-    if (_selectionne == null) return false;
-    final quantite = double.tryParse(
-      _quantiteController.text.replaceAll(',', '.'),
-    );
-    return quantite != null && quantite > 0;
+    return _selectionne != null &&
+        parseQuantite(_quantiteController.text) != null;
   }
 
   Future<void> _valider() async {
+    final quantite = parseQuantite(_quantiteController.text);
+    if (quantite == null) return;
+
     setState(() => _envoiEnCours = true);
-    final quantite = double.parse(
-      _quantiteController.text.replaceAll(',', '.'),
-    );
     await ref
         .read(articleCourseRepositoryProvider)
         .ajouterManuel(

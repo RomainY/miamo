@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/database/app_database.dart';
+import '../../../../shared/utils/quantite.dart';
 import '../../../frigo/presentation/pages/ajouter_produit_sheet.dart'
     show quantiteInputFormatters;
 import '../../../frigo/presentation/providers/frigo_providers.dart';
@@ -139,10 +140,8 @@ class _AjouterIngredientSheetState
             onPressed: _selectionne == null || uniteNom == null
                 ? null
                 : () {
-                    final quantite = double.tryParse(
-                      _quantiteController.text.replaceAll(',', '.'),
-                    );
-                    if (quantite == null || quantite <= 0) return;
+                    final quantite = parseQuantite(_quantiteController.text);
+                    if (quantite == null) return;
                     Navigator.of(context).pop(
                       IngredientChoisi(
                         produit: _selectionne!,

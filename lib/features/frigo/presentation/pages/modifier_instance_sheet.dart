@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/produit_frigo_repository.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/utils/quantite.dart';
 import '../providers/frigo_providers.dart';
 import 'ajouter_produit_sheet.dart' show quantiteInputFormatters;
 
@@ -145,9 +146,7 @@ class _ModifierInstanceSheetState
   }
 
   Future<void> _valider() async {
-    final quantite = double.tryParse(
-      _quantiteController.text.replaceAll(',', '.'),
-    );
+    final quantite = parseQuantite(_quantiteController.text);
     if (quantite == null) return;
 
     setState(() => _envoiEnCours = true);
