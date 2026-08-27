@@ -124,18 +124,23 @@ Alternative « clé en main » : remplacer `flutter_lints` par **`very_good_anal
 > traités en Lot B (B4). `sort_pub_dependencies` écarté (conflit avec l'ordre
 > conventionnel « deps SDK en tête »).
 
-### Lot B — À faire avant la première release
+### Lot B — Avant la première release — **en grande partie appliqué** (branche `audit/lot-b-pre-release`)
 
-| Ordre | Action | Réf. | Nature |
+| Ordre | Action | Réf. | Statut |
 |---|---|---|---|
-| B1 | `signingConfigs.release` + `key.properties` gitignoré | SEC‑07 | config Gradle |
-| B2 | Documenter/scripter le build obfusqué (fait dans le `README`) + valider un vrai build release (notifications incluses) | SEC‑08, SEC‑09 | process |
-| B3 | Décision explicite sur le chiffrement de la base (recommandé : rester en clair, décision tracée) | SEC‑01 | décision |
-| B4 | `unawaited_futures` activé + `await`/`try-catch` sur les actions fire-and-forget de l'UII | BP‑06 | correctif ciblé, **diff à valider** |
-| B5 | `onUpgrade` (même vide) + procédure de migration | SEC‑02 | correctif, **diff à valider** |
-| B6 | Helper de validation quantité (`> 0 && isFinite`) + `CHECK` SQL | SEC‑03, SEC‑04 | correctif, **diff à valider** (change le schéma → migration) |
-| B7 | `FlutterError.onError` / `PlatformDispatcher.onError` dans `main.dart` | BP‑10 | correctif, **diff à valider** |
-| B8 | Tests : validation quantités, `urgencePeremption`, `unite_repository`, échec `marquerFait` | BP‑16 | tests |
+| B1 | `signingConfigs.release` ← `android/key.properties` (gitignoré), fallback debug | SEC‑07 | ✅ `9114d49` — reste au mainteneur : générer le keystore + `key.properties` |
+| B2 | Build obfusqué documenté (`README`) + `--obfuscate --split-debug-info` | SEC‑08 | ✅ doc. **À valider** : vrai build release + test notifs après R8 (SEC‑09) — nécessite keystore + appareil |
+| B3 | Base locale **non chiffrée** — décision d'audit actée | SEC‑01 | ✅ `65a9701` (doc) |
+| B4 | `lancerAction()` : await + SnackBar sur les actions fire-and-forget ; `unawaited_futures` activé ; base `DomaineException` | BP‑06 | ✅ `dc2a245` |
+| B5 | `onUpgrade` branché (lève tant que non implémenté) + procédure de migration en doc | SEC‑02 | ✅ `97eda89` |
+| B6 | Helper `parseQuantite()` (`> 0 && isFinite`) dans les 4 sheets | SEC‑03 | ✅ `fe3b4a4` (6a). `CHECK` SQL (6b, SEC‑04) **différé** au 1ᵉʳ changement de schéma |
+| B7 | `FlutterError.onError` + `PlatformDispatcher.onError` dans `main()` | BP‑10 | ✅ `50269df` |
+| B8 | Tests : `unite_repository`, `urgencePeremption`, échec `marquerFait`, `parseQuantite` | BP‑16 | ✅ `27a5118` + `fe3b4a4` — 54 tests (au lieu de 36) |
+
+**Reste au mainteneur** : générer le keystore de release (B1), lancer et valider un
+build `--release --obfuscate` sur appareil avec test des notifications (B2/SEC‑09).
+**Différé** : `CHECK(quantite > 0)` SQL (B6b) → à grouper avec le premier vrai
+changement de schéma (`schemaVersion` 1→2).
 
 ### Lot C — Refactoring (à planifier, pas urgent)
 
@@ -161,7 +166,8 @@ Alternative « clé en main » : remplacer `flutter_lints` par **`very_good_anal
 | `053a491` | `feat(frigo):` écran de gestion du catalogue produits (travail en cours de l'auteur, commité pendant l'audit) | fonctionnel — `analyze` + `test` verts |
 | `9c08bd7` | `style(frigo):` contraste des puces de filtre (travail en cours de l'auteur) | visuel |
 | `59f01e0` | `chore:` `.gitattributes` (LF) + `.fvmrc` + `.gitignore` renforcé | nul |
-| `92389d9`…`dfae041` | **Lot A** — voir §4 (branche `audit/lot-a-quick-wins`) | faible, chaque commit vérifié `analyze` 0 / `test` 36/36 |
+| `92389d9`…`dfae041` | **Lot A** — 7 quick-wins (branche `audit/lot-a-quick-wins`, mergée) | faible, `analyze` 0 / `test` 36/36 par commit |
+| `50269df`…`65a9701` | **Lot B** — 7 commits (branche `audit/lot-b-pre-release`) | faible/moyen, `analyze` 0 / `test` 54/54 par commit |
 
-**Non appliqué** : lots B et C (correctifs nécessitant décision ou revue de diff).
-Voir §4.
+**Non appliqué** : Lot C (refactoring, voir §4), B6b (`CHECK` SQL) et la
+validation d'un build release réel (keystore + appareil requis).
