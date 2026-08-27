@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/repository_providers.dart';
 import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/action_feedback.dart';
 import '../providers/frigo_providers.dart';
 import '../widgets/category_chips_bar.dart';
 import '../widgets/expiration_warning_banner.dart';
@@ -75,12 +76,18 @@ class FrigoPage extends ConsumerWidget {
                       detail: detail,
                       onModifier: () =>
                           showModifierInstanceSheet(context, detail),
-                      onConsomme: () => ref
-                          .read(produitFrigoRepositoryProvider)
-                          .marquerConsomme(detail.instance.id),
-                      onJete: () => ref
-                          .read(produitFrigoRepositoryProvider)
-                          .marquerJete(detail.instance.id),
+                      onConsomme: () => lancerAction(
+                        context,
+                        () => ref
+                            .read(produitFrigoRepositoryProvider)
+                            .marquerConsomme(detail.instance.id),
+                      ),
+                      onJete: () => lancerAction(
+                        context,
+                        () => ref
+                            .read(produitFrigoRepositoryProvider)
+                            .marquerJete(detail.instance.id),
+                      ),
                       onSupprimer: () => _confirmerSuppression(
                         context,
                         ref,

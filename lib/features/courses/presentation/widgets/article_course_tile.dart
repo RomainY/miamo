@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/database/tables.dart';
 import '../../../../data/repositories/article_course_repository.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/widgets/action_feedback.dart';
 import '../../../frigo/presentation/widgets/product_list_tile.dart'
     show formatQuantite;
 import '../pages/renvoyer_vers_frigo_sheet.dart';
@@ -25,9 +26,12 @@ class ArticleCourseTile extends ConsumerWidget {
         value: achete,
         onChanged: achete
             ? null
-            : (_) => ref
-                  .read(articleCourseRepositoryProvider)
-                  .marquerAchete(article.id),
+            : (_) => lancerAction(
+                context,
+                () => ref
+                    .read(articleCourseRepositoryProvider)
+                    .marquerAchete(article.id),
+              ),
       ),
       title: Text(
         detail.produit.nom,
@@ -48,8 +52,12 @@ class ArticleCourseTile extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Supprimer',
-            onPressed: () =>
-                ref.read(articleCourseRepositoryProvider).supprimer(article.id),
+            onPressed: () => lancerAction(
+              context,
+              () => ref
+                  .read(articleCourseRepositoryProvider)
+                  .supprimer(article.id),
+            ),
           ),
         ],
       ),

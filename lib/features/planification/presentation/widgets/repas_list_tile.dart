@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/database/tables.dart';
 import '../../../../data/repositories/repas_planifie_repository.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/widgets/action_feedback.dart';
 
 /// Une ligne de repas planifié : titre (plat ou produit), portions, statut,
 /// actions rapides "Marquer fait" / "Annuler" (cahier-des-charges.md §7.5).
@@ -27,13 +28,17 @@ class RepasListTile extends ConsumerWidget {
       subtitle: Text(sousTitre),
       trailing: switch (repas.statut) {
         StatutRepas.planifie => PopupMenuButton<String>(
-          onSelected: (action) {
+          onSelected: (action) async {
             final repo = ref.read(repasPlanifieRepositoryProvider);
             switch (action) {
               case 'fait':
-                repo.marquerFait(repas.id);
+                await lancerAction(
+                  context,
+                  () => repo.marquerFait(repas.id),
+                  messageErreur: 'Impossible de marquer ce repas comme fait.',
+                );
               case 'annule':
-                repo.annuler(repas.id);
+                await lancerAction(context, () => repo.annuler(repas.id));
             }
           },
           itemBuilder: (context) => const [

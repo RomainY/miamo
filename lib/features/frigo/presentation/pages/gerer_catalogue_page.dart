@@ -7,6 +7,7 @@ import '../../../../data/repositories/produit_repository.dart';
 import '../../../../data/repositories/repository_providers.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/utils/exceptions.dart';
+import '../../../../shared/widgets/action_feedback.dart';
 import '../../../../shared/widgets/nom_dialog.dart';
 import '../providers/frigo_providers.dart';
 import '../widgets/category_chips_bar.dart';
@@ -122,9 +123,12 @@ class _ProduitsTabState extends ConsumerState<_ProduitsTab> {
                                   : Icons.archive_outlined,
                             ),
                             tooltip: archive ? 'Désarchiver' : 'Archiver',
-                            onPressed: () => archive
-                                ? repo.desarchiver(produit.id)
-                                : repo.archiver(produit.id),
+                            onPressed: () => lancerAction(
+                              context,
+                              () => archive
+                                  ? repo.desarchiver(produit.id)
+                                  : repo.archiver(produit.id),
+                            ),
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete_outline),
