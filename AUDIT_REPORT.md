@@ -106,17 +106,23 @@ Alternative « clé en main » : remplacer `flutter_lints` par **`very_good_anal
 
 ## 4. Plan d'action priorisé
 
-### Lot A — Quick wins (faible risque, fort ratio valeur/effort)
+### Lot A — Quick wins ✅ **appliqué** (branche `audit/lot-a-quick-wins`)
 
-| Ordre | Action | Réf. | Auto-fix ? | Commit suggéré |
-|---|---|---|---|---|
-| A1 | `dart format lib test` (36 fichiers, purement stylistique) | BP‑03 | ✅ oui, **commit isolé** | `style: applique dart format (formateur tall Dart 3.12)` |
-| A2 | `print` → `dart:developer log()` dans `NotificationService` | SEC‑10 | ✅ oui | `fix(securite): remplace print par log() dans NotificationService` |
-| A3 | `analysis_options.yaml` renforcé (sans `require_trailing_commas` au début) | BP‑04, config | semi | `chore: durcit analysis_options (strict-casts + lints)` |
-| A4 | `nom_dialog` : disposer le `TextEditingController` | BP‑11 | ✅ oui | `fix: dispose du controller dans showNomDialog` |
-| A5 | Garde `mounted` avant les `setState` de `catch` (4 sites) | BP‑07 | ✅ oui | `fix: garde mounted sur setState post-await` |
-| A6 | Corriger `Docs/PRE-LAUNCH-CHECKLIST.md` (pubspec.lock) + renseigner `.fvmrc` | SEC‑14, SEC‑13 | ✅ oui | `docs: corrige checklist + épingle version Flutter` |
-| A7 | `_zoneId = v` au lieu de `v!` (`modifier_instance_sheet`) | BP‑02 | ✅ oui | `fix: évite le bang sur onChanged du dropdown zone` |
+| Ordre | Action | Réf. | Commit |
+|---|---|---|---|
+| A1 | `dart format lib test` (36 fichiers, purement stylistique) | BP‑03 | `92389d9` |
+| A2 | `print` → `dart:developer log()` dans `NotificationService` | SEC‑10 | `a171d80` |
+| A3 | `analysis_options.yaml` renforcé (strict-casts + 13 lints) + conformité (3 fichiers) | BP‑04 | `b61cc4c` |
+| A4 | `nom_dialog` : `whenComplete(controller.dispose)` | BP‑11 | `84fe14d` |
+| A5 | Garde `mounted` avant les `setState` de `catch` (4 sites) | BP‑07 | `3002102` |
+| A6 | `.fvmrc` (Flutter 3.44.8) + correction `Docs/PRE-LAUNCH-CHECKLIST.md` | SEC‑13/14 | `59f01e0` (+ Docs, hors dépôt) |
+| A7 | garde `if (v != null)` au lieu de `v!` (`modifier_instance_sheet`) | BP‑02 | `dfae041` |
+
+> `strict-inference` / `strict-raw-types` et `unawaited_futures` / `discarded_futures`
+> ont été **volontairement écartés du Lot A** : ils nécessitent des correctifs de
+> code (annotations de type explicites, gestion des futures fire-and-forget) →
+> traités en Lot B (B4). `sort_pub_dependencies` écarté (conflit avec l'ordre
+> conventionnel « deps SDK en tête »).
 
 ### Lot B — À faire avant la première release
 
@@ -151,10 +157,11 @@ Alternative « clé en main » : remplacer `flutter_lints` par **`very_good_anal
 |---|---|---|
 | `df7a05a` | `chore: initial commit` — snapshot avant audit | — |
 | `bde7ab0` | `docs: ARCHITECTURE.md` | nul (doc) |
-| *(ce lot)* | `docs:` — `///` sur les 9 tables + 4 enums de statut + `AppDatabase` ; `README.md` complet ; `AUDIT_REPORT.md` | nul (doc / commentaires) |
+| `5cd7897` | `docs:` — `///` sur les 9 tables + 4 enums + `AppDatabase` ; `README.md` ; `AUDIT_REPORT.md` | nul (doc / commentaires) |
+| `053a491` | `feat(frigo):` écran de gestion du catalogue produits (travail en cours de l'auteur, commité pendant l'audit) | fonctionnel — `analyze` + `test` verts |
+| `9c08bd7` | `style(frigo):` contraste des puces de filtre (travail en cours de l'auteur) | visuel |
+| `59f01e0` | `chore:` `.gitattributes` (LF) + `.fvmrc` + `.gitignore` renforcé | nul |
+| `92389d9`…`dfae041` | **Lot A** — voir §4 (branche `audit/lot-a-quick-wins`) | faible, chaque commit vérifié `analyze` 0 / `test` 36/36 |
 
-**Non appliqué** (en attente de validation ou d'un arbre de travail propre) :
-`dart format` (Lot A1), `print`→`log` (A2) et tous les lots B/C. Le dépôt
-contient au moment de l'audit des modifications non commitées hors périmètre
-(feature « catalogue produits » en cours) : les auto-fixes du Lot A seront
-appliqués une fois ce travail commité/mis de côté, chacun dans son commit.
+**Non appliqué** : lots B et C (correctifs nécessitant décision ou revue de diff).
+Voir §4.
