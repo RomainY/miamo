@@ -30,7 +30,7 @@ class FrigoPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Gérer catégories et zones',
+            tooltip: 'Gérer le catalogue',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const GererCataloguePage()),
             ),

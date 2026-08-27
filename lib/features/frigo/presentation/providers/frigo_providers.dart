@@ -53,3 +53,15 @@ final produitsActifsProvider = StreamProvider.family<List<Produit>, int?>((
       .watch(produitRepositoryProvider)
       .watchActifs(categorieId: categorieId);
 });
+
+/// Catalogue complet (actifs + archivés), pour l'écran de gestion du
+/// catalogue (cahier-des-charges.md §7.3 "Consulter / filtrer le catalogue
+/// par catégorie").
+final produitsTousProvider = StreamProvider.family<List<Produit>, int?>((
+  ref,
+  categorieId,
+) {
+  return ref
+      .watch(produitRepositoryProvider)
+      .watchAll(categorieId: categorieId);
+});
