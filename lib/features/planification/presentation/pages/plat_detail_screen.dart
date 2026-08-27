@@ -182,9 +182,8 @@ class _PlatDetailScreenState extends ConsumerState<PlatDetailScreen> {
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: () => setState(
-                        () => _ingredients.remove(ingredient),
-                      ),
+                      onPressed: () =>
+                          setState(() => _ingredients.remove(ingredient)),
                     ),
                   ),
                 if (_erreur != null) ...[

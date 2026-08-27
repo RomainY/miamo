@@ -25,15 +25,18 @@ void main() {
 
   tearDown(() => db.close());
 
-  test('ajouterManuel crée un article origine=manuel, statut=a_acheter', () async {
-    final article = await repo.ajouterManuel(
-      produitId: produitId,
-      quantite: 1000,
-      uniteId: 3,
-    );
-    expect(article.origine, OrigineArticle.manuel);
-    expect(article.statut, StatutArticle.aAcheter);
-  });
+  test(
+    'ajouterManuel crée un article origine=manuel, statut=a_acheter',
+    () async {
+      final article = await repo.ajouterManuel(
+        produitId: produitId,
+        quantite: 1000,
+        uniteId: 3,
+      );
+      expect(article.origine, OrigineArticle.manuel);
+      expect(article.statut, StatutArticle.aAcheter);
+    },
+  );
 
   test('marquerAchete change le statut', () async {
     final article = await repo.ajouterManuel(
@@ -46,22 +49,25 @@ void main() {
     expect(relu.statut, StatutArticle.achete);
   });
 
-  test('renvoyerVersFrigo crée une instance en zone et conserve l\'article', () async {
-    final article = await repo.ajouterManuel(
-      produitId: produitId,
-      quantite: 1000,
-      uniteId: 3,
-    );
+  test(
+    'renvoyerVersFrigo crée une instance en zone et conserve l\'article',
+    () async {
+      final article = await repo.ajouterManuel(
+        produitId: produitId,
+        quantite: 1000,
+        uniteId: 3,
+      );
 
-    final instance = await repo.renvoyerVersFrigo(
-      articleId: article.id,
-      zoneId: 1,
-      datePeremption: DateTime(2026, 9, 1),
-    );
+      final instance = await repo.renvoyerVersFrigo(
+        articleId: article.id,
+        zoneId: 1,
+        datePeremption: DateTime(2026, 9, 1),
+      );
 
-    expect(instance.produitId, produitId);
-    expect(instance.quantite, 1000);
-    final articleApres = await repo.getById(article.id);
-    expect(articleApres.statut, StatutArticle.achete);
-  });
+      expect(instance.produitId, produitId);
+      expect(instance.quantite, 1000);
+      final articleApres = await repo.getById(article.id);
+      expect(articleApres.statut, StatutArticle.achete);
+    },
+  );
 }

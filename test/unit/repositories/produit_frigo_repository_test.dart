@@ -72,26 +72,29 @@ void main() {
     expect(liste[2].instance.datePeremption, isNull);
   });
 
-  test('marquerConsomme / marquerJete retirent l\'instance de watchEnStock', () async {
-    final consomme = await repo.create(
-      produitId: produitId,
-      zoneId: 1,
-      quantite: 1,
-      uniteId: 1,
-    );
-    final jete = await repo.create(
-      produitId: produitId,
-      zoneId: 1,
-      quantite: 1,
-      uniteId: 1,
-    );
+  test(
+    'marquerConsomme / marquerJete retirent l\'instance de watchEnStock',
+    () async {
+      final consomme = await repo.create(
+        produitId: produitId,
+        zoneId: 1,
+        quantite: 1,
+        uniteId: 1,
+      );
+      final jete = await repo.create(
+        produitId: produitId,
+        zoneId: 1,
+        quantite: 1,
+        uniteId: 1,
+      );
 
-    await repo.marquerConsomme(consomme.id);
-    await repo.marquerJete(jete.id);
+      await repo.marquerConsomme(consomme.id);
+      await repo.marquerJete(jete.id);
 
-    final enStock = await repo.watchEnStock().first;
-    expect(enStock, isEmpty);
-  });
+      final enStock = await repo.watchEnStock().first;
+      expect(enStock, isEmpty);
+    },
+  );
 
   test('supprimerInstance supprime la ligne sans changer de statut', () async {
     final instance = await repo.create(

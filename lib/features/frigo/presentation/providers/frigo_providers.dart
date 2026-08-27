@@ -25,11 +25,10 @@ final instancesEnStockProvider = StreamProvider<List<InstanceFrigoDetail>>((
 /// Toutes les instances en stock, sans filtre — utilisé par le bandeau
 /// d'alerte péremption et la synchronisation des notifications, qui doivent
 /// rester indépendants du filtre actif sur l'écran Frigo.
-final instancesEnStockGlobalProvider = StreamProvider<List<InstanceFrigoDetail>>((
-  ref,
-) {
-  return ref.watch(produitFrigoRepositoryProvider).watchEnStock();
-});
+final instancesEnStockGlobalProvider =
+    StreamProvider<List<InstanceFrigoDetail>>((ref) {
+      return ref.watch(produitFrigoRepositoryProvider).watchEnStock();
+    });
 
 final categoriesProvider = StreamProvider<List<Categorie>>((ref) {
   return ref.watch(categorieRepositoryProvider).watchAll();

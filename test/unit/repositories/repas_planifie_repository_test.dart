@@ -117,30 +117,35 @@ void main() {
     expect(repasApres.statut, StatutRepas.fait);
   });
 
-  test('watchProchainsDetail résout le plat ou le produit isolé associé', () async {
-    final plat = await PlatRepository(
-      db,
-    ).create(nom: 'Riz cantonais', portionsDefaut: 2);
-    await repo.planifier(
-      date: DateTime.now().add(const Duration(days: 1)),
-      platId: plat.id,
-      portions: 2,
-    );
-    await repo.planifier(
-      date: DateTime.now().add(const Duration(days: 2)),
-      produitId: produitId,
-      portions: 3,
-    );
+  test(
+    'watchProchainsDetail résout le plat ou le produit isolé associé',
+    () async {
+      final plat = await PlatRepository(
+        db,
+      ).create(nom: 'Riz cantonais', portionsDefaut: 2);
+      await repo.planifier(
+        date: DateTime.now().add(const Duration(days: 1)),
+        platId: plat.id,
+        portions: 2,
+      );
+      await repo.planifier(
+        date: DateTime.now().add(const Duration(days: 2)),
+        produitId: produitId,
+        portions: 3,
+      );
 
-    final details = await repo.watchProchainsDetail().first;
+      final details = await repo.watchProchainsDetail().first;
 
-    expect(details, hasLength(2));
-    final detailPlat = details.firstWhere((d) => d.repas.platId != null);
-    expect(detailPlat.titre, 'Riz cantonais');
-    expect(detailPlat.produit, isNull);
+      expect(details, hasLength(2));
+      final detailPlat = details.firstWhere((d) => d.repas.platId != null);
+      expect(detailPlat.titre, 'Riz cantonais');
+      expect(detailPlat.produit, isNull);
 
-    final detailProduit = details.firstWhere((d) => d.repas.produitId != null);
-    expect(detailProduit.titre, 'Riz');
-    expect(detailProduit.plat, isNull);
-  });
+      final detailProduit = details.firstWhere(
+        (d) => d.repas.produitId != null,
+      );
+      expect(detailProduit.titre, 'Riz');
+      expect(detailProduit.plat, isNull);
+    },
+  );
 }

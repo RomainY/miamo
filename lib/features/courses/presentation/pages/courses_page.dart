@@ -38,8 +38,7 @@ class CoursesPage extends ConsumerWidget {
               ],
               if (achetes.isNotEmpty) ...[
                 const _EnTeteSection('Achetés'),
-                for (final detail in achetes)
-                  ArticleCourseTile(detail: detail),
+                for (final detail in achetes) ArticleCourseTile(detail: detail),
               ],
             ],
           );

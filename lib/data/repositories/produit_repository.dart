@@ -59,9 +59,7 @@ class ProduitRepository extends BaseRepository {
   }
 
   Future<Produit> getById(int id) {
-    return (db.select(
-      db.produits,
-    )..where((t) => t.id.equals(id))).getSingle();
+    return (db.select(db.produits)..where((t) => t.id.equals(id))).getSingle();
   }
 
   /// Crée un produit (chemin B : nouveau produit créé à la volée, ou écran
@@ -143,26 +141,30 @@ class ProduitRepository extends BaseRepository {
   Future<CascadeSuppressionProduit> previewSuppressionCascade(
     int produitId,
   ) async {
-    final instancesFrigo = await (db.selectOnly(db.produitsFrigo)
-          ..addColumns([db.produitsFrigo.id.count()])
-          ..where(db.produitsFrigo.produitId.equals(produitId)))
-        .map((row) => row.read(db.produitsFrigo.id.count()) ?? 0)
-        .getSingle();
-    final ingredientsPlat = await (db.selectOnly(db.platIngredients)
-          ..addColumns([db.platIngredients.id.count()])
-          ..where(db.platIngredients.produitId.equals(produitId)))
-        .map((row) => row.read(db.platIngredients.id.count()) ?? 0)
-        .getSingle();
-    final articlesCourse = await (db.selectOnly(db.articlesCourse)
-          ..addColumns([db.articlesCourse.id.count()])
-          ..where(db.articlesCourse.produitId.equals(produitId)))
-        .map((row) => row.read(db.articlesCourse.id.count()) ?? 0)
-        .getSingle();
-    final repasPlanifies = await (db.selectOnly(db.repasPlanifies)
-          ..addColumns([db.repasPlanifies.id.count()])
-          ..where(db.repasPlanifies.produitId.equals(produitId)))
-        .map((row) => row.read(db.repasPlanifies.id.count()) ?? 0)
-        .getSingle();
+    final instancesFrigo =
+        await (db.selectOnly(db.produitsFrigo)
+              ..addColumns([db.produitsFrigo.id.count()])
+              ..where(db.produitsFrigo.produitId.equals(produitId)))
+            .map((row) => row.read(db.produitsFrigo.id.count()) ?? 0)
+            .getSingle();
+    final ingredientsPlat =
+        await (db.selectOnly(db.platIngredients)
+              ..addColumns([db.platIngredients.id.count()])
+              ..where(db.platIngredients.produitId.equals(produitId)))
+            .map((row) => row.read(db.platIngredients.id.count()) ?? 0)
+            .getSingle();
+    final articlesCourse =
+        await (db.selectOnly(db.articlesCourse)
+              ..addColumns([db.articlesCourse.id.count()])
+              ..where(db.articlesCourse.produitId.equals(produitId)))
+            .map((row) => row.read(db.articlesCourse.id.count()) ?? 0)
+            .getSingle();
+    final repasPlanifies =
+        await (db.selectOnly(db.repasPlanifies)
+              ..addColumns([db.repasPlanifies.id.count()])
+              ..where(db.repasPlanifies.produitId.equals(produitId)))
+            .map((row) => row.read(db.repasPlanifies.id.count()) ?? 0)
+            .getSingle();
 
     return CascadeSuppressionProduit(
       instancesFrigo: instancesFrigo,
@@ -197,9 +199,7 @@ class ProduitRepository extends BaseRepository {
       await (db.delete(
         db.repasPlanifies,
       )..where((t) => t.produitId.equals(produitId))).go();
-      await (db.delete(
-        db.produits,
-      )..where((t) => t.id.equals(produitId))).go();
+      await (db.delete(db.produits)..where((t) => t.id.equals(produitId))).go();
     });
   }
 

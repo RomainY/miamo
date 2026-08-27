@@ -47,7 +47,10 @@ class ExpirationWarningBanner extends ConsumerWidget {
               children: [
                 Text(
                   '${proches.length} produit(s) périment bientôt',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: titre),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: titre,
+                  ),
                 ),
                 Text(
                   proches.map((d) => d.produit.nom).join(', '),

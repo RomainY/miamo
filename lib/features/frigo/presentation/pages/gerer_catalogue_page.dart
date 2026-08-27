@@ -93,7 +93,11 @@ class _ProduitsTabState extends ConsumerState<_ProduitsTab> {
                       title: Text(
                         produit.nom,
                         style: archive
-                            ? TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)
+                            ? TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              )
                             : null,
                       ),
                       subtitle: Text(
@@ -126,7 +130,8 @@ class _ProduitsTabState extends ConsumerState<_ProduitsTab> {
                             icon: const Icon(Icons.delete_outline),
                             tooltip: 'Supprimer définitivement',
                             onPressed: archive
-                                ? () => _supprimerProduit(context, repo, produit)
+                                ? () =>
+                                      _supprimerProduit(context, repo, produit)
                                 : null,
                           ),
                         ],
@@ -347,7 +352,9 @@ Future<void> _supprimer(
     await onValider();
   } on ElementProtegeException catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
 }

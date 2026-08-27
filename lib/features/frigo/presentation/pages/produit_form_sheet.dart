@@ -202,7 +202,11 @@ class _ProduitFormSheetState extends ConsumerState<_ProduitFormSheet> {
             ],
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: _envoiEnCours ? null : _peutValider() ? _valider : null,
+              onPressed: _envoiEnCours
+                  ? null
+                  : _peutValider()
+                  ? _valider
+                  : null,
               child: _envoiEnCours
                   ? const SizedBox(
                       height: 18,

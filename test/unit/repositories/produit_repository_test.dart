@@ -18,18 +18,21 @@ void main() {
 
   tearDown(() => db.close());
 
-  test('create rejette une unité incompatible avec le type de grandeur', () async {
-    // unite id=3 (millilitre, volume) seedée, incompatible avec masse.
-    expect(
-      () => repo.create(
-        nom: 'Tomate',
-        categorieId: 1,
-        typeGrandeur: TypeGrandeur.masse,
-        uniteDefautId: 3,
-      ),
-      throwsArgumentError,
-    );
-  });
+  test(
+    'create rejette une unité incompatible avec le type de grandeur',
+    () async {
+      // unite id=3 (millilitre, volume) seedée, incompatible avec masse.
+      expect(
+        () => repo.create(
+          nom: 'Tomate',
+          categorieId: 1,
+          typeGrandeur: TypeGrandeur.masse,
+          uniteDefautId: 3,
+        ),
+        throwsArgumentError,
+      );
+    },
+  );
 
   test('create rejette un nom déjà utilisé', () async {
     await repo.create(
@@ -66,18 +69,21 @@ void main() {
     expect(actifsApresDesarchivage.any((p) => p.id == produit.id), isTrue);
   });
 
-  test('supprimerDefinitivement est bloqué tant que le produit est actif', () async {
-    final produit = await repo.create(
-      nom: 'Tomate',
-      categorieId: 1,
-      typeGrandeur: TypeGrandeur.masse,
-      uniteDefautId: 1,
-    );
-    expect(
-      () => repo.supprimerDefinitivement(produit.id),
-      throwsA(isA<ProduitNonArchiveException>()),
-    );
-  });
+  test(
+    'supprimerDefinitivement est bloqué tant que le produit est actif',
+    () async {
+      final produit = await repo.create(
+        nom: 'Tomate',
+        categorieId: 1,
+        typeGrandeur: TypeGrandeur.masse,
+        uniteDefautId: 1,
+      );
+      expect(
+        () => repo.supprimerDefinitivement(produit.id),
+        throwsA(isA<ProduitNonArchiveException>()),
+      );
+    },
+  );
 
   test('supprimerDefinitivement supprime en cascade instances/ingrédients/'
       'articles/repas liés', () async {
@@ -101,7 +107,9 @@ void main() {
         );
     final platId = await db
         .into(db.plats)
-        .insert(PlatsCompanion.insert(nom: 'Salade', portionsDefaut: const Value(2)));
+        .insert(
+          PlatsCompanion.insert(nom: 'Salade', portionsDefaut: const Value(2)),
+        );
     await db
         .into(db.platIngredients)
         .insert(

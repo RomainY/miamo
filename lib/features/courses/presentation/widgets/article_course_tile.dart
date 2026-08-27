@@ -35,9 +35,7 @@ class ArticleCourseTile extends ConsumerWidget {
             ? const TextStyle(decoration: TextDecoration.lineThrough)
             : null,
       ),
-      subtitle: Text(
-        '${formatQuantite(article.quantite)} ${detail.unite.nom}',
-      ),
+      subtitle: Text('${formatQuantite(article.quantite)} ${detail.unite.nom}'),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -50,9 +48,8 @@ class ArticleCourseTile extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Supprimer',
-            onPressed: () => ref
-                .read(articleCourseRepositoryProvider)
-                .supprimer(article.id),
+            onPressed: () =>
+                ref.read(articleCourseRepositoryProvider).supprimer(article.id),
           ),
         ],
       ),

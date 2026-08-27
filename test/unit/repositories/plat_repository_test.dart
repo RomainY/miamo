@@ -59,15 +59,18 @@ void main() {
     expect(ingredients.first.ingredient.quantite, 350);
   });
 
-  test('delete est bloqué si le plat est utilisé par un repas planifié', () async {
-    final plat = await repo.create(nom: 'Riz cantonais', portionsDefaut: 2);
-    await RepasPlanifieRepository(
-      db,
-    ).planifier(date: DateTime(2026, 9, 1), platId: plat.id, portions: 2);
+  test(
+    'delete est bloqué si le plat est utilisé par un repas planifié',
+    () async {
+      final plat = await repo.create(nom: 'Riz cantonais', portionsDefaut: 2);
+      await RepasPlanifieRepository(
+        db,
+      ).planifier(date: DateTime(2026, 9, 1), platId: plat.id, portions: 2);
 
-    expect(
-      () => repo.delete(plat.id),
-      throwsA(isA<ReferenceActiveException>()),
-    );
-  });
+      expect(
+        () => repo.delete(plat.id),
+        throwsA(isA<ReferenceActiveException>()),
+      );
+    },
+  );
 }

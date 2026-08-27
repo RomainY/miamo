@@ -28,10 +28,7 @@ class ArticleCourseRepository extends BaseRepository {
         db.produits,
         db.produits.id.equalsExp(db.articlesCourse.produitId),
       ),
-      innerJoin(
-        db.unites,
-        db.unites.id.equalsExp(db.articlesCourse.uniteId),
-      ),
+      innerJoin(db.unites, db.unites.id.equalsExp(db.articlesCourse.uniteId)),
     ]);
     if (statut != null) {
       query.where(db.articlesCourse.statut.equalsValue(statut));

@@ -55,10 +55,7 @@ class ProductListTile extends StatelessWidget {
             },
             itemBuilder: (context) => const [
               PopupMenuItem(value: 'modifier', child: Text('Modifier')),
-              PopupMenuItem(
-                value: 'consomme',
-                child: Text('Marquer consommé'),
-              ),
+              PopupMenuItem(value: 'consomme', child: Text('Marquer consommé')),
               PopupMenuItem(value: 'jete', child: Text('Marquer jeté')),
               PopupMenuDivider(),
               PopupMenuItem(

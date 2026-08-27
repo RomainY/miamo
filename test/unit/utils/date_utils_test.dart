@@ -3,17 +3,14 @@ import 'package:miamo/shared/utils/date_utils.dart';
 
 void main() {
   group('dateDeclenchementNotification', () {
-    test(
-      'programme la notification joursAvantNotification jours avant, '
-      'à heureNotification h',
-      () {
-        final declenchement = dateDeclenchementNotification(
-          DateTime(2026, 9, 10),
-          maintenant: DateTime(2026, 9, 1),
-        );
-        expect(declenchement, DateTime(2026, 9, 8, 9));
-      },
-    );
+    test('programme la notification joursAvantNotification jours avant, '
+        'à heureNotification h', () {
+      final declenchement = dateDeclenchementNotification(
+        DateTime(2026, 9, 10),
+        maintenant: DateTime(2026, 9, 1),
+      );
+      expect(declenchement, DateTime(2026, 9, 8, 9));
+    });
 
     test('retourne null si le déclenchement est déjà passé', () {
       final declenchement = dateDeclenchementNotification(

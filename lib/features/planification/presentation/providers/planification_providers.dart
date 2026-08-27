@@ -23,19 +23,15 @@ final platsProvider = StreamProvider<List<Plat>>((ref) {
 
 /// Repas planifiés du mois affiché par le calendrier (bornes larges pour
 /// couvrir les jours des mois voisins visibles dans la grille).
-final repasMoisProvider = StreamProvider.family<List<RepasPlanifieDetail>, DateTime>((
-  ref,
-  mois,
-) {
-  final debut = DateTime(mois.year, mois.month - 1, 21);
-  final fin = DateTime(mois.year, mois.month + 2, 10);
-  return ref
-      .watch(repasPlanifieRepositoryProvider)
-      .watchByDateRangeDetail(debut, fin);
-});
+final repasMoisProvider =
+    StreamProvider.family<List<RepasPlanifieDetail>, DateTime>((ref, mois) {
+      final debut = DateTime(mois.year, mois.month - 1, 21);
+      final fin = DateTime(mois.year, mois.month + 2, 10);
+      return ref
+          .watch(repasPlanifieRepositoryProvider)
+          .watchByDateRangeDetail(debut, fin);
+    });
 
-final repasProchainsProvider = StreamProvider<List<RepasPlanifieDetail>>((
-  ref,
-) {
+final repasProchainsProvider = StreamProvider<List<RepasPlanifieDetail>>((ref) {
   return ref.watch(repasPlanifieRepositoryProvider).watchProchainsDetail();
 });

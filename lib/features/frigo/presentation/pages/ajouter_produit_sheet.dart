@@ -151,11 +151,18 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
             ],
             if (_erreur != null) ...[
               const SizedBox(height: 12),
-              Text(_erreur!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              Text(
+                _erreur!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ],
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: _envoiEnCours ? null : _peutValider() ? _valider : null,
+              onPressed: _envoiEnCours
+                  ? null
+                  : _peutValider()
+                  ? _valider
+                  : null,
               child: _envoiEnCours
                   ? const SizedBox(
                       height: 18,

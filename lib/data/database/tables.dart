@@ -49,8 +49,7 @@ class Categories extends Table {
   /// ici par symétrie avec `Zone.is_root` pour ne pas dépendre du nom
   /// (qui reste modifiable, cf. cahier-des-charges.md §8.2 pour le pattern
   /// équivalent sur Zone).
-  BoolColumn get estParDefaut =>
-      boolean().withDefault(const Constant(false))();
+  BoolColumn get estParDefaut => boolean().withDefault(const Constant(false))();
 
   @override
   List<Set<Column>> get uniqueKeys => [
@@ -117,10 +116,9 @@ class Produits extends Table {
   /// (cf. documentation-technique.md §2 "Produit").
   TextColumn get typeGrandeur => textEnum<TypeGrandeur>()();
   IntColumn get uniteDefautId => integer().references(Unites, #id)();
-  TextColumn get statut =>
-      textEnum<StatutProduit>().withDefault(
-        Constant(StatutProduit.actif.name),
-      )();
+  TextColumn get statut => textEnum<StatutProduit>().withDefault(
+    Constant(StatutProduit.actif.name),
+  )();
   DateTimeColumn get dateDerniereUtilisation => dateTime().nullable()();
 
   @override
@@ -144,10 +142,9 @@ class ProduitsFrigo extends Table {
   IntColumn get uniteId => integer().references(Unites, #id)();
   DateTimeColumn get dateAjout => dateTime()();
   DateTimeColumn get datePeremption => dateTime().nullable()();
-  TextColumn get statut =>
-      textEnum<StatutProduitFrigo>().withDefault(
-        Constant(StatutProduitFrigo.enStock.name),
-      )();
+  TextColumn get statut => textEnum<StatutProduitFrigo>().withDefault(
+    Constant(StatutProduitFrigo.enStock.name),
+  )();
 
   /// Date du changement de statut (consommé/jeté), utilisée pour les
   /// statistiques anti-gaspi (hors MVP v1, cf. documentation-technique.md §5).
@@ -199,10 +196,9 @@ class RepasPlanifies extends Table {
   /// plat associé (cf. documentation-technique.md §2 "RepasPlanifie").
   IntColumn get produitId => integer().nullable().references(Produits, #id)();
   IntColumn get portions => integer()();
-  TextColumn get statut =>
-      textEnum<StatutRepas>().withDefault(
-        Constant(StatutRepas.planifie.name),
-      )();
+  TextColumn get statut => textEnum<StatutRepas>().withDefault(
+    Constant(StatutRepas.planifie.name),
+  )();
 }
 
 /// Ligne de la liste de courses. MVP v1 : `origine` toujours `manuel`. Peut
@@ -217,12 +213,10 @@ class ArticlesCourse extends Table {
   IntColumn get produitId => integer().references(Produits, #id)();
   RealColumn get quantite => real()();
   IntColumn get uniteId => integer().references(Unites, #id)();
-  TextColumn get origine =>
-      textEnum<OrigineArticle>().withDefault(
-        Constant(OrigineArticle.manuel.name),
-      )();
-  TextColumn get statut =>
-      textEnum<StatutArticle>().withDefault(
-        Constant(StatutArticle.aAcheter.name),
-      )();
+  TextColumn get origine => textEnum<OrigineArticle>().withDefault(
+    Constant(OrigineArticle.manuel.name),
+  )();
+  TextColumn get statut => textEnum<StatutArticle>().withDefault(
+    Constant(StatutArticle.aAcheter.name),
+  )();
 }

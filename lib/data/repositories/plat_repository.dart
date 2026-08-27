@@ -62,10 +62,7 @@ class PlatRepository extends BaseRepository {
         db.produits,
         db.produits.id.equalsExp(db.platIngredients.produitId),
       ),
-      innerJoin(
-        db.unites,
-        db.unites.id.equalsExp(db.platIngredients.uniteId),
-      ),
+      innerJoin(db.unites, db.unites.id.equalsExp(db.platIngredients.uniteId)),
     ])..where(db.platIngredients.platId.equals(platId));
   }
 
@@ -102,9 +99,7 @@ class PlatRepository extends BaseRepository {
       if (ingredients.isNotEmpty) {
         await _ecrireIngredients(id, ingredients);
       }
-      return (db.select(
-        db.plats,
-      )..where((t) => t.id.equals(id))).getSingle();
+      return (db.select(db.plats)..where((t) => t.id.equals(id))).getSingle();
     });
   }
 

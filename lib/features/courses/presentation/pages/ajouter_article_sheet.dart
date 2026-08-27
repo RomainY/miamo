@@ -113,9 +113,7 @@ class _AjouterArticleSheetState extends ConsumerState<_AjouterArticleSheet> {
           const SizedBox(height: 12),
           TextField(
             controller: _quantiteController,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: quantiteInputFormatters,
             decoration: InputDecoration(
               labelText: 'Quantité',
@@ -124,7 +122,11 @@ class _AjouterArticleSheetState extends ConsumerState<_AjouterArticleSheet> {
           ),
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: _envoiEnCours ? null : _peutValider() ? _valider : null,
+            onPressed: _envoiEnCours
+                ? null
+                : _peutValider()
+                ? _valider
+                : null,
             child: _envoiEnCours
                 ? const SizedBox(
                     height: 18,

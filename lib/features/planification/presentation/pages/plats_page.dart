@@ -45,9 +45,9 @@ class PlatsPage extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Erreur : $e')),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PlatDetailScreen()),
-        ),
+        onPressed: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const PlatDetailScreen())),
         child: const Icon(Icons.add),
       ),
     );

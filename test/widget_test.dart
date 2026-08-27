@@ -18,9 +18,7 @@ void main() {
     // Timer.zero, que le test framework signale comme "pending" s'il n'a pas
     // eu l'occasion de s'exécuter avant le teardown.
     final container = ProviderContainer(
-      overrides: [
-        appDatabaseProvider.overrideWithValue(createTestDatabase()),
-      ],
+      overrides: [appDatabaseProvider.overrideWithValue(createTestDatabase())],
     );
 
     await tester.pumpWidget(

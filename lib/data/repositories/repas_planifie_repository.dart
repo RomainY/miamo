@@ -38,7 +38,9 @@ class RepasPlanifieRepository extends BaseRepository {
 
   Stream<List<RepasPlanifie>> watchProchains({DateTime? apartirDe}) {
     return (db.select(db.repasPlanifies)
-          ..where((t) => t.date.isBiggerOrEqualValue(apartirDe ?? DateTime.now()))
+          ..where(
+            (t) => t.date.isBiggerOrEqualValue(apartirDe ?? DateTime.now()),
+          )
           ..where((t) => t.statut.equalsValue(StatutRepas.planifie))
           ..orderBy([(t) => OrderingTerm.asc(t.date)]))
         .watch();
@@ -88,9 +90,7 @@ class RepasPlanifieRepository extends BaseRepository {
     return _watchDetail(query);
   }
 
-  Stream<List<RepasPlanifieDetail>> _watchDetail(
-    JoinedSelectStatement query,
-  ) {
+  Stream<List<RepasPlanifieDetail>> _watchDetail(JoinedSelectStatement query) {
     return query.watch().map(
       (rows) => rows
           .map(
@@ -140,9 +140,7 @@ class RepasPlanifieRepository extends BaseRepository {
   }
 
   Future<void> ajusterPortions(int id, int portions) async {
-    await (db.update(
-      db.repasPlanifies,
-    )..where((t) => t.id.equals(id))).write(
+    await (db.update(db.repasPlanifies)..where((t) => t.id.equals(id))).write(
       RepasPlanifiesCompanion(portions: Value(portions)),
     );
   }
@@ -189,9 +187,7 @@ class RepasPlanifieRepository extends BaseRepository {
         );
       }
 
-      await (db.update(
-        db.repasPlanifies,
-      )..where((t) => t.id.equals(id))).write(
+      await (db.update(db.repasPlanifies)..where((t) => t.id.equals(id))).write(
         const RepasPlanifiesCompanion(statut: Value(StatutRepas.fait)),
       );
     });
@@ -259,9 +255,7 @@ class RepasPlanifieRepository extends BaseRepository {
   }
 
   Future<void> _changerStatut(int id, StatutRepas statut) async {
-    await (db.update(
-      db.repasPlanifies,
-    )..where((t) => t.id.equals(id))).write(
+    await (db.update(db.repasPlanifies)..where((t) => t.id.equals(id))).write(
       RepasPlanifiesCompanion(statut: Value(statut)),
     );
   }

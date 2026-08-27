@@ -193,7 +193,11 @@ class _PlanifierRepasSheetState extends ConsumerState<_PlanifierRepasSheet> {
             ],
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: _envoiEnCours ? null : _peutValider() ? _valider : null,
+              onPressed: _envoiEnCours
+                  ? null
+                  : _peutValider()
+                  ? _valider
+                  : null,
               child: _envoiEnCours
                   ? const SizedBox(
                       height: 18,
@@ -211,9 +215,9 @@ class _PlanifierRepasSheetState extends ConsumerState<_PlanifierRepasSheet> {
   /// Crée un plat sans quitter le flux de planification (ouvre l'écran
   /// complet — ingrédients inclus — puis pré-sélectionne le plat créé).
   Future<void> _creerNouveauPlat() async {
-    final plat = await Navigator.of(context).push<Plat>(
-      MaterialPageRoute(builder: (_) => const PlatDetailScreen()),
-    );
+    final plat = await Navigator.of(
+      context,
+    ).push<Plat>(MaterialPageRoute(builder: (_) => const PlatDetailScreen()));
     if (plat == null || !mounted) return;
     setState(() {
       _platSelectionne = plat;

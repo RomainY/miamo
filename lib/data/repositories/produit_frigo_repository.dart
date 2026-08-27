@@ -42,10 +42,7 @@ class ProduitFrigoRepository extends BaseRepository {
               db.unites,
               db.unites.id.equalsExp(db.produitsFrigo.uniteId),
             ),
-            innerJoin(
-              db.zones,
-              db.zones.id.equalsExp(db.produitsFrigo.zoneId),
-            ),
+            innerJoin(db.zones, db.zones.id.equalsExp(db.produitsFrigo.zoneId)),
           ])
           ..where(
             db.produitsFrigo.statut.equalsValue(StatutProduitFrigo.enStock),
@@ -138,12 +135,11 @@ class ProduitFrigoRepository extends BaseRepository {
     return getById(id);
   }
 
-  Future<void> marquerConsomme(int id) => _marquerStatut(
-    id,
-    StatutProduitFrigo.consomme,
-  );
+  Future<void> marquerConsomme(int id) =>
+      _marquerStatut(id, StatutProduitFrigo.consomme);
 
-  Future<void> marquerJete(int id) => _marquerStatut(id, StatutProduitFrigo.jete);
+  Future<void> marquerJete(int id) =>
+      _marquerStatut(id, StatutProduitFrigo.jete);
 
   /// Suppression d'une ligne (correction d'erreur de saisie) : contrairement
   /// à consommé/jeté, n'alimente pas les statistiques anti-gaspi.

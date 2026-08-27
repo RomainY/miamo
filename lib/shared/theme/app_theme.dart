@@ -48,14 +48,15 @@ class AppRadius {
 }
 
 ThemeData buildAppTheme() {
-  final colorScheme = ColorScheme.fromSeed(
-    seedColor: AppColors.accent,
-    brightness: Brightness.light,
-  ).copyWith(
-    primary: AppColors.accent,
-    surface: AppColors.background,
-    onSurface: AppColors.text,
-  );
+  final colorScheme =
+      ColorScheme.fromSeed(
+        seedColor: AppColors.accent,
+        brightness: Brightness.light,
+      ).copyWith(
+        primary: AppColors.accent,
+        surface: AppColors.background,
+        onSurface: AppColors.text,
+      );
 
   final controlShape = RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(AppRadius.control),

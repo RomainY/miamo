@@ -15,7 +15,12 @@ DateTime? dateDeclenchementNotification(
   final jour = datePeremption.subtract(
     const Duration(days: joursAvantNotification),
   );
-  final declenchement = DateTime(jour.year, jour.month, jour.day, heureNotification);
+  final declenchement = DateTime(
+    jour.year,
+    jour.month,
+    jour.day,
+    heureNotification,
+  );
   if (declenchement.isBefore(maintenant ?? DateTime.now())) return null;
   return declenchement;
 }

@@ -25,8 +25,9 @@ class ZoneRepository extends BaseRepository {
   }
 
   Future<Zone> getRoot() {
-    return (db.select(db.zones)..where((t) => t.isRoot.equals(true)))
-        .getSingle();
+    return (db.select(
+      db.zones,
+    )..where((t) => t.isRoot.equals(true))).getSingle();
   }
 
   Future<Zone> create({required String nom, String? icone}) async {
@@ -67,11 +68,8 @@ class ZoneRepository extends BaseRepository {
 
     await db.transaction(() async {
       final racine = await getRoot();
-      await (db.update(
-        db.produitsFrigo,
-      )..where((t) => t.zoneId.equals(id))).write(
-        ProduitsFrigoCompanion(zoneId: Value(racine.id)),
-      );
+      await (db.update(db.produitsFrigo)..where((t) => t.zoneId.equals(id)))
+          .write(ProduitsFrigoCompanion(zoneId: Value(racine.id)));
       await (db.delete(db.zones)..where((t) => t.id.equals(id))).go();
     });
   }

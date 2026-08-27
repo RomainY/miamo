@@ -34,9 +34,9 @@ class _PlanificationPageState extends ConsumerState<PlanificationPage> {
           IconButton(
             icon: const Icon(Icons.menu_book_outlined),
             tooltip: 'Mes plats',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const PlatsPage()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const PlatsPage())),
           ),
         ],
       ),
@@ -69,10 +69,8 @@ class _PlanificationPageState extends ConsumerState<PlanificationPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => showPlanifierRepasSheet(
-          context,
-          dateInitiale: dateSelectionnee,
-        ),
+        onPressed: () =>
+            showPlanifierRepasSheet(context, dateInitiale: dateSelectionnee),
         child: const Icon(Icons.add),
       ),
     );
@@ -91,7 +89,9 @@ class _PlanificationPageState extends ConsumerState<PlanificationPage> {
           parJour[jour] = (parJour[jour] ?? 0) + 1;
         }
         final repasJourSelectionne = liste
-            .where((d) => _sansHeure(d.repas.date) == _sansHeure(dateSelectionnee))
+            .where(
+              (d) => _sansHeure(d.repas.date) == _sansHeure(dateSelectionnee),
+            )
             .toList();
 
         return Column(

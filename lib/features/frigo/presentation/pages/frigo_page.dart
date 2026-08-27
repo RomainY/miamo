@@ -81,8 +81,11 @@ class FrigoPage extends ConsumerWidget {
                       onJete: () => ref
                           .read(produitFrigoRepositoryProvider)
                           .marquerJete(detail.instance.id),
-                      onSupprimer: () =>
-                          _confirmerSuppression(context, ref, detail.instance.id),
+                      onSupprimer: () => _confirmerSuppression(
+                        context,
+                        ref,
+                        detail.instance.id,
+                      ),
                     );
                   },
                 );
@@ -127,7 +130,9 @@ class FrigoPage extends ConsumerWidget {
       ),
     );
     if (confirme == true) {
-      await ref.read(produitFrigoRepositoryProvider).supprimerInstance(instanceId);
+      await ref
+          .read(produitFrigoRepositoryProvider)
+          .supprimerInstance(instanceId);
     }
   }
 }

@@ -13,15 +13,15 @@ class CategorieRepository extends BaseRepository {
   const CategorieRepository(super.db);
 
   Stream<List<Categorie>> watchAll() {
-    return (db.select(db.categories)
-          ..orderBy([(t) => OrderingTerm.asc(t.nom)]))
-        .watch();
+    return (db.select(
+      db.categories,
+    )..orderBy([(t) => OrderingTerm.asc(t.nom)])).watch();
   }
 
   Future<List<Categorie>> getAll() {
-    return (db.select(db.categories)
-          ..orderBy([(t) => OrderingTerm.asc(t.nom)]))
-        .get();
+    return (db.select(
+      db.categories,
+    )..orderBy([(t) => OrderingTerm.asc(t.nom)])).get();
   }
 
   Future<Categorie> getDefault() {
@@ -47,9 +47,7 @@ class CategorieRepository extends BaseRepository {
     if (nom != null) {
       await _verifierNomLibre(nom, exclureId: id);
     }
-    await (db.update(
-      db.categories,
-    )..where((t) => t.id.equals(id))).write(
+    await (db.update(db.categories)..where((t) => t.id.equals(id))).write(
       CategoriesCompanion(
         nom: nom == null ? const Value.absent() : Value(nom),
         icone: icone == null ? const Value.absent() : Value(icone),
@@ -70,9 +68,7 @@ class CategorieRepository extends BaseRepository {
 
     await db.transaction(() async {
       final defaut = await getDefault();
-      await (db.update(db.produits)..where(
-            (t) => t.categorieId.equals(id),
-          ))
+      await (db.update(db.produits)..where((t) => t.categorieId.equals(id)))
           .write(ProduitsCompanion(categorieId: Value(defaut.id)));
       await (db.delete(db.categories)..where((t) => t.id.equals(id))).go();
     });

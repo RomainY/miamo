@@ -127,9 +127,7 @@ class _AjouterIngredientSheetState
           const SizedBox(height: 12),
           TextField(
             controller: _quantiteController,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: quantiteInputFormatters,
             decoration: InputDecoration(
               labelText: 'Quantité',

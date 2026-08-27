@@ -9,7 +9,9 @@ import 'tables.dart';
 /// - zone racine "Frigo" (is_root = true, réaffectation, non supprimable)
 /// - unités de base pour chaque type_grandeur
 Future<void> seedInitialData(AppDatabase db) async {
-  await db.into(db.categories).insert(
+  await db
+      .into(db.categories)
+      .insert(
         const CategoriesCompanion(
           nom: Value('Non classé'),
           icone: Value('category'),
@@ -17,7 +19,9 @@ Future<void> seedInitialData(AppDatabase db) async {
         ),
       );
 
-  await db.into(db.zones).insert(
+  await db
+      .into(db.zones)
+      .insert(
         const ZonesCompanion(
           nom: Value('Frigo'),
           icone: Value('kitchen'),
