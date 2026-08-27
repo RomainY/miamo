@@ -58,5 +58,5 @@ Future<void> showNomDialog(
         ],
       ),
     ),
-  );
+  ).whenComplete(controller.dispose);
 }
