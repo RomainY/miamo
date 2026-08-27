@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/theme/app_theme.dart';
+
 /// Barre horizontale de filtres (catégories ou zones), avec une puce
 /// "Toutes" pour désactiver le filtre (cahier-des-charges.md §3.1
 /// "Filtrage par zone et/ou par catégorie").
@@ -58,7 +60,7 @@ class ChipsFilterBar extends StatelessWidget {
                 showCheckmark: false,
                 label: Text(option.$2),
                 selected: selectedId == option.$1,
-                selectedColor: colorFor?.call(option.$1),
+                selectedColor: colorFor == null ? null : AppColors.accent,
                 labelStyle: selectedId == option.$1 && colorFor != null
                     ? const TextStyle(
                         color: Colors.white,

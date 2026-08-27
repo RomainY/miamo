@@ -14,16 +14,23 @@ class AppColors {
   static const textMuted = Color(0xFF8A8880);
   static const accent = Color(0xFFB5673A);
 
-  /// Palette pour les catégories du catalogue (ambiance "ludique") —
-  /// assignée par [categorieColor] à partir de l'id, pour rester cohérente
-  /// même pour des catégories créées librement par l'utilisateur.
+  /// Fond des puces non sélectionnées (ChoiceChip/Chip) — nettement plus
+  /// sombre que [background]/[surface], pour rester visible sur la page au
+  /// lieu de s'y fondre ("blanc sur blanc").
+  static const chipBackground = Color(0xFFEFEAE3);
+
+  /// Palette "arc-en-ciel" pour le point coloré (dot) devant chaque
+  /// catégorie — teintes vives, choisies pour rester bien distinctes entre
+  /// elles à petite taille. N'est plus utilisée en fond de puce (le fond
+  /// sélectionné reste l'accent terracotta unique, cf. category_chips_bar.dart)
+  /// donc pas de contrainte de contraste avec du texte blanc ici.
   static const categoriePalette = [
-    Color(0xFF4C8C5B), // vert
-    Color(0xFF3D6FA6), // bleu
-    Color(0xFFA8483F), // rouge
-    Color(0xFFAC8A2E), // ocre
-    Color(0xFF7A5CA6), // violet
-    Color(0xFF3D8C86), // sarcelle
+    Color(0xFF43A047), // vert
+    Color(0xFF1E88E5), // bleu
+    Color(0xFFE53935), // rouge
+    Color(0xFFFB8C00), // orange
+    Color(0xFF8E24AA), // violet
+    Color(0xFF00897B), // sarcelle
   ];
 
   static Color categorieColor(int id) =>
@@ -83,8 +90,12 @@ ThemeData buildAppTheme() {
     chipTheme: ChipThemeData(
       shape: controlShape,
       side: const BorderSide(color: AppColors.border),
-      backgroundColor: AppColors.surface,
-      labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+      backgroundColor: AppColors.chipBackground,
+      labelStyle: const TextStyle(
+        color: AppColors.text,
+        fontWeight: FontWeight.w600,
+        fontSize: 13,
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
