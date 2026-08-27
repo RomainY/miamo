@@ -420,9 +420,9 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
 
       if (mounted) Navigator.of(context).pop();
     } on DuplicateNameException catch (e) {
-      setState(() => _erreur = e.message);
+      if (mounted) setState(() => _erreur = e.message);
     } catch (e) {
-      setState(() => _erreur = 'Erreur : $e');
+      if (mounted) setState(() => _erreur = 'Erreur : $e');
     } finally {
       if (mounted) setState(() => _envoiEnCours = false);
     }

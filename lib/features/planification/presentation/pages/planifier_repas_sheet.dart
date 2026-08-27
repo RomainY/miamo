@@ -248,7 +248,7 @@ class _PlanifierRepasSheetState extends ConsumerState<_PlanifierRepasSheet> {
           );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
-      setState(() => _erreur = 'Erreur : $e');
+      if (mounted) setState(() => _erreur = 'Erreur : $e');
     } finally {
       if (mounted) setState(() => _envoiEnCours = false);
     }

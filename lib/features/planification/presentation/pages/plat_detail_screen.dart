@@ -282,7 +282,7 @@ class _PlatDetailScreenState extends ConsumerState<PlatDetailScreen> {
       // qui le pré-sélectionne directement après création).
       if (mounted) Navigator.of(context).pop(plat);
     } on DuplicateNameException catch (e) {
-      setState(() => _erreur = e.message);
+      if (mounted) setState(() => _erreur = e.message);
     } finally {
       if (mounted) setState(() => _envoiEnCours = false);
     }
