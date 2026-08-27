@@ -73,8 +73,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Ouvre la base fichier dans le répertoire applicatif (résolu par
-  /// `path_provider`). Base **non chiffrée** : choix assumé pour le MVP, les
-  /// données stockées ne contenant aucun secret ni donnée personnelle sensible.
+  /// `path_provider`).
+  ///
+  /// Base **non chiffrée** — décision d'audit actée (SEC-01, cf.
+  /// AUDIT_REPORT.md) : les données stockées (frigo, plats, planning) ne
+  /// contiennent ni secret ni donnée personnelle sensible, et l'app n'a pas de
+  /// compte. Le surcoût d'une gestion de clé (`flutter_secure_storage` +
+  /// SQLCipher) n'est pas justifié. À réévaluer si des données sensibles
+  /// venaient à être stockées.
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'app_frigo');
   }
