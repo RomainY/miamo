@@ -6,6 +6,17 @@ import 'tables.dart';
 
 part 'app_database.g.dart';
 
+/// Base SQLite locale unique de l'application (fichier `app_frigo`, via
+/// `drift_flutter`). Aucune synchronisation distante.
+///
+/// **Faire évoluer le schéma** (ajout de colonne, table, contrainte…) :
+/// 1. Modifier les tables dans `tables.dart`.
+/// 2. Incrémenter [schemaVersion].
+/// 3. Ajouter un `case` dans [_onUpgrade] pour l'intervalle `from -> to`
+///    (`ALTER TABLE`, `m.createTable(...)`, back-fill…).
+/// 4. Régénérer : `dart run build_runner build --delete-conflicting-outputs`.
+/// 5. Couvrir la migration par un test (ouvrir une base v(N-1), migrer,
+///    vérifier les données).
 @DriftDatabase(
   tables: [
     Categories,
@@ -19,10 +30,6 @@ part 'app_database.g.dart';
     ArticlesCourse,
   ],
 )
-/// Base SQLite locale unique de l'application (fichier `app_frigo`, via
-/// `drift_flutter`). Aucune synchronisation distante. Le schéma est en
-/// version 1 ; toute évolution ultérieure devra incrémenter [schemaVersion]
-/// et ajouter un `onUpgrade` à [migration].
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -38,10 +45,32 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await seedInitialData(this);
     },
+    onUpgrade: _onUpgrade,
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  /// Aucune migration à ce jour (schéma en version 1). Au premier changement
+  /// de schéma, désactiver les clés étrangères en tête (`PRAGMA foreign_keys
+  /// = OFF`, réactivées par `beforeOpen`), puis traiter chaque intervalle :
+  ///
+  /// ```dart
+  /// switch (from) {
+  ///   case 1:
+  ///     await m.addColumn(produits, produits.nouveauChamp);
+  ///     continue v2;
+  ///   v2:
+  ///   case 2:
+  ///     // ...
+  /// }
+  /// ```
+  Future<void> _onUpgrade(Migrator m, int from, int to) async {
+    throw UnsupportedError(
+      'Migration de la base v$from -> v$to non implémentée '
+      '(voir AppDatabase._onUpgrade).',
+    );
+  }
 
   /// Ouvre la base fichier dans le répertoire applicatif (résolu par
   /// `path_provider`). Base **non chiffrée** : choix assumé pour le MVP, les
