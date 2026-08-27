@@ -78,7 +78,9 @@ class _ModifierInstanceSheetState
                 for (final zone in liste)
                   DropdownMenuItem(value: zone.id, child: Text(zone.nom)),
               ],
-              onChanged: (v) => setState(() => _zoneId = v!),
+              onChanged: (v) {
+                if (v != null) setState(() => _zoneId = v);
+              },
             ),
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => Text('Erreur : $e'),
