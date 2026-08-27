@@ -117,6 +117,39 @@ void main() {
     expect(repasApres.statut, StatutRepas.fait);
   });
 
+  test('marquerFait sur un repas non "planifié" lève et ne décompte rien '
+      '(échec visible, cf. audit BP-06)', () async {
+    final instance = await frigoRepo.create(
+      produitId: produitId,
+      zoneId: 1,
+      quantite: 500,
+      uniteId: 1,
+    );
+    final repas = await repo.planifier(
+      date: DateTime(2026, 8, 20),
+      produitId: produitId,
+      portions: 150,
+    );
+    await repo.marquerFait(repas.id);
+
+    // Deuxième appel : le repas est déjà "fait".
+    await expectLater(repo.marquerFait(repas.id), throwsStateError);
+
+    // La transaction a été annulée : le stock n'a été décompté qu'une fois.
+    final instanceApres = await frigoRepo.getById(instance.id);
+    expect(instanceApres.quantite, closeTo(350, 0.001));
+  });
+
+  test('annuler puis marquerFait lève également', () async {
+    final repas = await repo.planifier(
+      date: DateTime(2026, 8, 20),
+      produitId: produitId,
+      portions: 10,
+    );
+    await repo.annuler(repas.id);
+    await expectLater(repo.marquerFait(repas.id), throwsStateError);
+  });
+
   test(
     'watchProchainsDetail résout le plat ou le produit isolé associé',
     () async {
