@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/produit_frigo_repository.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/utils/dropdown.dart';
 import '../../../../shared/utils/quantite.dart';
 import '../providers/frigo_providers.dart';
 import 'ajouter_produit_sheet.dart' show quantiteInputFormatters;
@@ -73,7 +74,10 @@ class _ModifierInstanceSheetState
           const SizedBox(height: 16),
           zones.when(
             data: (liste) => DropdownButtonFormField<int>(
-              initialValue: _zoneId,
+              initialValue: valeurDropdownValide(
+                _zoneId,
+                liste.map((z) => z.id),
+              ),
               decoration: const InputDecoration(labelText: 'Zone'),
               items: [
                 for (final zone in liste)

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/database/app_database.dart';
 import '../../../../data/database/tables.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/utils/dropdown.dart';
 import '../../../../shared/utils/exceptions.dart';
 import '../../../../shared/widgets/nom_dialog.dart';
 import '../providers/frigo_providers.dart';
@@ -87,7 +88,10 @@ class _ProduitFormSheetState extends ConsumerState<_ProduitFormSheet> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<int>(
-                        initialValue: _categorieId,
+                        initialValue: valeurDropdownValide(
+                          _categorieId,
+                          liste.map((c) => c.id),
+                        ),
                         decoration: const InputDecoration(
                           labelText: 'Catégorie',
                         ),
@@ -162,7 +166,10 @@ class _ProduitFormSheetState extends ConsumerState<_ProduitFormSheet> {
                       .toList();
                   _uniteId ??= compatibles.firstOrNull?.id;
                   return DropdownButtonFormField<int>(
-                    initialValue: _uniteId,
+                    initialValue: valeurDropdownValide(
+                      _uniteId,
+                      compatibles.map((u) => u.id),
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Unité de suivi',
                     ),

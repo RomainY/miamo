@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/article_course_repository.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/utils/dropdown.dart';
 import '../../../frigo/presentation/providers/frigo_providers.dart';
 
 /// Renvoie un article acheté vers le frigo, en réutilisant le flux d'ajout
@@ -60,7 +61,10 @@ class _RenvoyerVersFrigoSheetState
             data: (liste) {
               _zoneId ??= liste.where((z) => z.isRoot).firstOrNull?.id;
               return DropdownButtonFormField<int>(
-                initialValue: _zoneId,
+                initialValue: valeurDropdownValide(
+                  _zoneId,
+                  liste.map((z) => z.id),
+                ),
                 decoration: const InputDecoration(labelText: 'Zone'),
                 items: [
                   for (final zone in liste)

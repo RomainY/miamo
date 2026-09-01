@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/database/app_database.dart';
 import '../../../../data/database/tables.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/utils/dropdown.dart';
 import '../../../../shared/utils/exceptions.dart';
 import '../../../../shared/utils/quantite.dart';
 import '../../../../shared/widgets/nom_dialog.dart';
@@ -113,7 +114,10 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
                 data: (liste) {
                   _zoneId ??= liste.where((z) => z.isRoot).firstOrNull?.id;
                   return DropdownButtonFormField<int>(
-                    initialValue: _zoneId,
+                    initialValue: valeurDropdownValide(
+                      _zoneId,
+                      liste.map((z) => z.id),
+                    ),
                     items: [
                       for (final zone in liste)
                         DropdownMenuItem(value: zone.id, child: Text(zone.nom)),
@@ -264,7 +268,10 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<int>(
-                    initialValue: _categorieId,
+                    initialValue: valeurDropdownValide(
+                      _categorieId,
+                      liste.map((c) => c.id),
+                    ),
                     decoration: const InputDecoration(labelText: 'Catégorie'),
                     items: [
                       for (final categorie in liste)
@@ -321,7 +328,10 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
                   .toList();
               _uniteId ??= compatibles.firstOrNull?.id;
               return DropdownButtonFormField<int>(
-                initialValue: _uniteId,
+                initialValue: valeurDropdownValide(
+                  _uniteId,
+                  compatibles.map((u) => u.id),
+                ),
                 decoration: const InputDecoration(labelText: 'Unité de suivi'),
                 items: [
                   for (final unite in compatibles)

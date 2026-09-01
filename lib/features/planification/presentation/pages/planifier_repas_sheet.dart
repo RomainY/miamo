@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/utils/dropdown.dart';
 import '../../../frigo/presentation/providers/frigo_providers.dart';
 import '../providers/planification_providers.dart';
 import 'plat_detail_screen.dart';
@@ -121,7 +122,10 @@ class _PlanifierRepasSheetState extends ConsumerState<_PlanifierRepasSheet> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<int>(
-                          initialValue: _platSelectionne?.id,
+                          initialValue: valeurDropdownValide(
+                            _platSelectionne?.id,
+                            liste.map((p) => p.id),
+                          ),
                           decoration: const InputDecoration(labelText: 'Plat'),
                           items: [
                             for (final plat in liste)
@@ -158,7 +162,10 @@ class _PlanifierRepasSheetState extends ConsumerState<_PlanifierRepasSheet> {
                     return const Text('Aucun produit disponible.');
                   }
                   return DropdownButtonFormField<int>(
-                    initialValue: _produitSelectionne?.id,
+                    initialValue: valeurDropdownValide(
+                      _produitSelectionne?.id,
+                      liste.map((p) => p.id),
+                    ),
                     decoration: const InputDecoration(labelText: 'Produit'),
                     items: [
                       for (final produit in liste)
