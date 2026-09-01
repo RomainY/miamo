@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../shared/utils/exceptions.dart';
+import '../../shared/utils/tri.dart';
 import '../database/app_database.dart';
 import '../database/tables.dart';
 import 'base_repository.dart';
@@ -48,14 +49,18 @@ class ProduitRepository extends BaseRepository {
     return query.watch();
   }
 
-  /// Catalogue complet (actifs + archivés), pour l'écran de gestion.
+  /// Catalogue complet (actifs + archivés), pour l'écran de gestion. Tri
+  /// alphabétique fait en Dart (insensible casse + accents), SQLite ne sachant
+  /// trier que sur les code points bruts — cf. [comparerAlphabetique].
   Stream<List<Produit>> watchAll({int? categorieId}) {
-    final query = db.select(db.produits)
-      ..orderBy([(t) => OrderingTerm.asc(t.nom)]);
+    final query = db.select(db.produits);
     if (categorieId != null) {
       query.where((t) => t.categorieId.equals(categorieId));
     }
-    return query.watch();
+    return query.watch().map(
+      (liste) =>
+          liste..sort((a, b) => comparerAlphabetique(a.nom, b.nom)),
+    );
   }
 
   Future<Produit> getById(int id) {

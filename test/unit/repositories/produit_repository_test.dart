@@ -52,6 +52,20 @@ void main() {
     );
   });
 
+  test('watchAll trie sans tenir compte de la casse ni des accents', () async {
+    for (final nom in ['Épinard', 'avocat', 'elan', 'Œuf', 'zébu']) {
+      await repo.create(
+        nom: nom,
+        categorieId: 1,
+        typeGrandeur: TypeGrandeur.masse,
+        uniteDefautId: 1,
+      );
+    }
+
+    final noms = (await repo.watchAll().first).map((p) => p.nom).toList();
+    expect(noms, ['avocat', 'elan', 'Épinard', 'Œuf', 'zébu']);
+  });
+
   test('archiver retire le produit de watchActifs', () async {
     final produit = await repo.create(
       nom: 'Tomate',
