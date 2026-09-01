@@ -150,6 +150,34 @@ void main() {
     await expectLater(repo.marquerFait(repas.id), throwsStateError);
   });
 
+  test('watchPlanifiesDetail ne renvoie que les repas "planifié", toutes '
+      'dates confondues', () async {
+    final plat = await PlatRepository(
+      db,
+    ).create(nom: 'Riz cantonais', portionsDefaut: 2);
+
+    // Repas passé, toujours planifié.
+    final passe = await repo.planifier(
+      date: DateTime(2020, 1, 1),
+      platId: plat.id,
+      portions: 2,
+    );
+    // Repas futur qu'on annule.
+    final annule = await repo.planifier(
+      date: DateTime(2030, 1, 1),
+      produitId: produitId,
+      portions: 3,
+    );
+    await repo.annuler(annule.id);
+
+    final details = await repo.watchPlanifiesDetail().first;
+    expect(details.map((d) => d.repas.id), [passe.id]);
+
+    // Réactif : marquer le dernier repas planifié "fait" vide la liste.
+    await repo.marquerFait(passe.id);
+    expect(await repo.watchPlanifiesDetail().first, isEmpty);
+  });
+
   test(
     'watchProchainsDetail résout le plat ou le produit isolé associé',
     () async {

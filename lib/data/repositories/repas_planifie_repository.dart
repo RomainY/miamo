@@ -90,6 +90,26 @@ class RepasPlanifieRepository extends BaseRepository {
     return _watchDetail(query);
   }
 
+  /// Tous les repas au statut `planifie`, quelle que soit leur date (y compris
+  /// en retard), triés par date croissante. Base de l'allocation cumulée du
+  /// stock pour l'indicateur de disponibilité des ingrédients.
+  Stream<List<RepasPlanifieDetail>> watchPlanifiesDetail() {
+    final query =
+        db.select(db.repasPlanifies).join([
+            leftOuterJoin(
+              db.plats,
+              db.plats.id.equalsExp(db.repasPlanifies.platId),
+            ),
+            leftOuterJoin(
+              db.produits,
+              db.produits.id.equalsExp(db.repasPlanifies.produitId),
+            ),
+          ])
+          ..where(db.repasPlanifies.statut.equalsValue(StatutRepas.planifie))
+          ..orderBy([OrderingTerm.asc(db.repasPlanifies.date)]);
+    return _watchDetail(query);
+  }
+
   Stream<List<RepasPlanifieDetail>> _watchDetail(JoinedSelectStatement query) {
     return query.watch().map(
       (rows) => rows

@@ -59,6 +59,36 @@ void main() {
     expect(ingredients.first.ingredient.quantite, 350);
   });
 
+  test('watchTousIngredients renvoie les ingrédients de tous les plats', () async {
+    final plat1 = await repo.create(
+      nom: 'Plat 1',
+      portionsDefaut: 1,
+      ingredients: [
+        IngredientInput(produitId: produitId, quantite: 100, uniteId: 1),
+      ],
+    );
+    final plat2 = await repo.create(
+      nom: 'Plat 2',
+      portionsDefaut: 1,
+      ingredients: [
+        IngredientInput(produitId: produitId, quantite: 250, uniteId: 1),
+      ],
+    );
+
+    final lignes = await repo.watchTousIngredients().first;
+    expect(lignes, hasLength(2));
+    expect(
+      lignes.map((i) => i.platId).toSet(),
+      {plat1.id, plat2.id},
+    );
+
+    // Réactif : la suppression des ingrédients d'un plat se répercute.
+    await repo.remplacerIngredients(plat1.id, []);
+    final apres = await repo.watchTousIngredients().first;
+    expect(apres, hasLength(1));
+    expect(apres.single.platId, plat2.id);
+  });
+
   test(
     'delete est bloqué si le plat est utilisé par un repas planifié',
     () async {

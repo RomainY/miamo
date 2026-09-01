@@ -56,6 +56,13 @@ class PlatRepository extends BaseRepository {
     return _lireIngredients(await _ingredientsQuery(platId).get());
   }
 
+  /// Tous les ingrédients de tous les plats, pour le calcul transverse de
+  /// disponibilité des repas planifiés (regroupement par `platId` côté
+  /// appelant).
+  Stream<List<PlatIngredient>> watchTousIngredients() {
+    return db.select(db.platIngredients).watch();
+  }
+
   JoinedSelectStatement _ingredientsQuery(int platId) {
     return db.select(db.platIngredients).join([
       innerJoin(

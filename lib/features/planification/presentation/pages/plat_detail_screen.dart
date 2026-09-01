@@ -5,7 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/plat_repository.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/utils/exceptions.dart';
+import '../../../frigo/presentation/providers/frigo_providers.dart';
+import '../../domain/disponibilite_ingredients.dart';
 import 'ajouter_ingredient_sheet.dart';
 
 class _IngredientEdit {
@@ -93,6 +96,13 @@ class _PlatDetailScreenState extends ConsumerState<PlatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final stock = ref.watch(instancesEnStockGlobalProvider).valueOrNull;
+    final pool = stock == null ? null : construirePool(stock);
+    final unitesParId = {
+      for (final u in ref.watch(unitesProvider).valueOrNull ?? const <Unite>[])
+        u.id: u,
+    };
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_modeEdition ? 'Modifier le plat' : 'Nouveau plat'),
@@ -168,6 +178,15 @@ class _PlatDetailScreenState extends ConsumerState<PlatDetailScreen> {
                     ),
                   ],
                 ),
+                if (_ingredients.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      "Disponibilité d'après ton frigo actuel, pour les "
+                      'portions par défaut.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
                 if (_ingredients.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
@@ -177,8 +196,14 @@ class _PlatDetailScreenState extends ConsumerState<PlatDetailScreen> {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(ingredient.produitNom),
-                    subtitle: Text(
-                      '${_formatQuantite(ingredient.quantite)} ${ingredient.uniteNom}',
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${_formatQuantite(ingredient.quantite)} ${ingredient.uniteNom}',
+                        ),
+                        ?_ligneDispo(ingredient, pool, unitesParId),
+                      ],
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.close),
@@ -213,6 +238,33 @@ class _PlatDetailScreenState extends ConsumerState<PlatDetailScreen> {
 
   String _formatQuantite(double q) =>
       q == q.roundToDouble() ? q.toStringAsFixed(0) : q.toStringAsFixed(2);
+
+  /// Ligne "dispo : X unité" pour un ingrédient, comparée au stock brut du
+  /// frigo (aucune allocation entre plats/repas ici). `null` tant que le
+  /// stock n'est pas chargé ou si l'unité est inconnue.
+  Widget? _ligneDispo(
+    _IngredientEdit ingredient,
+    PoolStock? pool,
+    Map<int, Unite> unitesParId,
+  ) {
+    if (pool == null) return null;
+    final unite = unitesParId[ingredient.uniteId];
+    if (unite == null) return null;
+
+    final disponible =
+        pool.disponible(ingredient.produitId, unite.typeGrandeur) /
+        unite.facteurVersBase;
+    final suffisant = disponible + 1e-6 >= ingredient.quantite;
+
+    return Text(
+      'dispo : ${_formatQuantite(disponible)} ${ingredient.uniteNom}',
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: suffisant
+            ? AppColors.textMuted
+            : Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
 
   Future<void> _ajouterIngredient() async {
     final choisi = await showAjouterIngredientSheet(context);

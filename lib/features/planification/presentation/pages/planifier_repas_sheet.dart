@@ -6,6 +6,7 @@ import '../../../../data/database/app_database.dart';
 import '../../../../data/repositories/repository_providers.dart';
 import '../../../../shared/utils/dropdown.dart';
 import '../../../frigo/presentation/providers/frigo_providers.dart';
+import '../../domain/disponibilite_ingredients.dart';
 import '../providers/planification_providers.dart';
 import 'plat_detail_screen.dart';
 
@@ -190,7 +191,9 @@ class _PlanifierRepasSheetState extends ConsumerState<_PlanifierRepasSheet> {
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: const InputDecoration(labelText: 'Portions'),
+              onChanged: (_) => setState(() {}),
             ),
+            _apercuDisponibilite(),
             if (_erreur != null) ...[
               const SizedBox(height: 12),
               Text(
@@ -215,6 +218,91 @@ class _PlanifierRepasSheetState extends ConsumerState<_PlanifierRepasSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Aperçu en direct de la disponibilité des ingrédients pour le repas en
+  /// cours de saisie, calculé sur le stock résiduel une fois les repas déjà
+  /// planifiés pris en compte. Purement informatif : ne bloque pas la
+  /// planification.
+  Widget _apercuDisponibilite() {
+    final portions = int.tryParse(_portionsController.text);
+    final pretPlat = _estPlat && _platSelectionne != null;
+    final pretProduit = !_estPlat && _produitSelectionne != null;
+    if (portions == null || portions <= 0 || (!pretPlat && !pretProduit)) {
+      return const SizedBox.shrink();
+    }
+
+    final dispo = evaluerCandidat(
+      pool: ref.watch(poolResiduelProvider),
+      plat: pretPlat ? _platSelectionne : null,
+      produit: pretProduit ? _produitSelectionne : null,
+      portions: portions,
+      ingredientsParPlat:
+          ref.watch(ingredientsParPlatProvider).valueOrNull ?? const {},
+      unitesParId: {
+        for (final u in ref.watch(unitesProvider).valueOrNull ?? const <Unite>[])
+          u.id: u,
+      },
+      produitsParId: ref.watch(produitsParIdProvider).valueOrNull ?? const {},
+    );
+    if (dispo == null) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    String fmt(double q) =>
+        q == q.roundToDouble() ? q.toStringAsFixed(0) : q.toStringAsFixed(2);
+
+    if (dispo.ok) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle_outline, size: 18, color: Color(0xFF3E7C4A)),
+            const SizedBox(width: 6),
+            Text(
+              'Tous les ingrédients sont disponibles',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      );
+    }
+
+    final couleur = dispo.global == ManqueIngredient.manquant
+        ? const Color(0xFFC23B3B)
+        : const Color(0xFFB4711E);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, size: 18, color: couleur),
+              const SizedBox(width: 6),
+              Text(
+                dispo.global == ManqueIngredient.manquant
+                    ? 'Ingrédient(s) manquant(s)'
+                    : 'Stock incomplet',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: couleur,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (final m in dispo.manques)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                '• ${m.produitNom} — requis ${fmt(m.requis)} ${m.uniteNom}, '
+                'dispo ${fmt(m.disponible)} ${m.uniteNom}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+        ],
       ),
     );
   }
