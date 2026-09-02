@@ -1030,6 +1030,21 @@ class $ProduitsTable extends Produits with TableInfo<$ProduitsTable, Produit> {
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _codeBarreMeta = const VerificationMeta(
+    'codeBarre',
+  );
+  @override
+  late final GeneratedColumn<String> codeBarre = GeneratedColumn<String>(
+    'code_barre',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 8,
+      maxTextLength: 14,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1039,6 +1054,7 @@ class $ProduitsTable extends Produits with TableInfo<$ProduitsTable, Produit> {
     uniteDefautId,
     statut,
     dateDerniereUtilisation,
+    codeBarre,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1094,6 +1110,12 @@ class $ProduitsTable extends Produits with TableInfo<$ProduitsTable, Produit> {
         ),
       );
     }
+    if (data.containsKey('code_barre')) {
+      context.handle(
+        _codeBarreMeta,
+        codeBarre.isAcceptableOrUnknown(data['code_barre']!, _codeBarreMeta),
+      );
+    }
     return context;
   }
 
@@ -1139,6 +1161,10 @@ class $ProduitsTable extends Produits with TableInfo<$ProduitsTable, Produit> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}date_derniere_utilisation'],
       ),
+      codeBarre: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}code_barre'],
+      ),
     );
   }
 
@@ -1166,6 +1192,14 @@ class Produit extends DataClass implements Insertable<Produit> {
   final int uniteDefautId;
   final StatutProduit statut;
   final DateTime? dateDerniereUtilisation;
+
+  /// Code-barres EAN‑13/EAN‑8/UPC‑A/ITF‑14 renseigné via le scan (évolution
+  /// v1.1, cf. Docs/poc-scan-code-barres.md). Sert de cache de reconnaissance :
+  /// un code déjà connu retrouve le produit sans réseau. Nullable — tous les
+  /// produits n'ont pas de code (vrac, fait maison) ; l'index UNIQUE ignore les
+  /// NULL (comportement SQLite standard), donc plusieurs produits « sans code »
+  /// coexistent. Ajouté par la migration de schéma v1 → v2.
+  final String? codeBarre;
   const Produit({
     required this.id,
     required this.nom,
@@ -1174,6 +1208,7 @@ class Produit extends DataClass implements Insertable<Produit> {
     required this.uniteDefautId,
     required this.statut,
     this.dateDerniereUtilisation,
+    this.codeBarre,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1197,6 +1232,9 @@ class Produit extends DataClass implements Insertable<Produit> {
         dateDerniereUtilisation,
       );
     }
+    if (!nullToAbsent || codeBarre != null) {
+      map['code_barre'] = Variable<String>(codeBarre);
+    }
     return map;
   }
 
@@ -1211,6 +1249,9 @@ class Produit extends DataClass implements Insertable<Produit> {
       dateDerniereUtilisation: dateDerniereUtilisation == null && nullToAbsent
           ? const Value.absent()
           : Value(dateDerniereUtilisation),
+      codeBarre: codeBarre == null && nullToAbsent
+          ? const Value.absent()
+          : Value(codeBarre),
     );
   }
 
@@ -1233,6 +1274,7 @@ class Produit extends DataClass implements Insertable<Produit> {
       dateDerniereUtilisation: serializer.fromJson<DateTime?>(
         json['dateDerniereUtilisation'],
       ),
+      codeBarre: serializer.fromJson<String?>(json['codeBarre']),
     );
   }
   @override
@@ -1252,6 +1294,7 @@ class Produit extends DataClass implements Insertable<Produit> {
       'dateDerniereUtilisation': serializer.toJson<DateTime?>(
         dateDerniereUtilisation,
       ),
+      'codeBarre': serializer.toJson<String?>(codeBarre),
     };
   }
 
@@ -1263,6 +1306,7 @@ class Produit extends DataClass implements Insertable<Produit> {
     int? uniteDefautId,
     StatutProduit? statut,
     Value<DateTime?> dateDerniereUtilisation = const Value.absent(),
+    Value<String?> codeBarre = const Value.absent(),
   }) => Produit(
     id: id ?? this.id,
     nom: nom ?? this.nom,
@@ -1273,6 +1317,7 @@ class Produit extends DataClass implements Insertable<Produit> {
     dateDerniereUtilisation: dateDerniereUtilisation.present
         ? dateDerniereUtilisation.value
         : this.dateDerniereUtilisation,
+    codeBarre: codeBarre.present ? codeBarre.value : this.codeBarre,
   );
   Produit copyWithCompanion(ProduitsCompanion data) {
     return Produit(
@@ -1291,6 +1336,7 @@ class Produit extends DataClass implements Insertable<Produit> {
       dateDerniereUtilisation: data.dateDerniereUtilisation.present
           ? data.dateDerniereUtilisation.value
           : this.dateDerniereUtilisation,
+      codeBarre: data.codeBarre.present ? data.codeBarre.value : this.codeBarre,
     );
   }
 
@@ -1303,7 +1349,8 @@ class Produit extends DataClass implements Insertable<Produit> {
           ..write('typeGrandeur: $typeGrandeur, ')
           ..write('uniteDefautId: $uniteDefautId, ')
           ..write('statut: $statut, ')
-          ..write('dateDerniereUtilisation: $dateDerniereUtilisation')
+          ..write('dateDerniereUtilisation: $dateDerniereUtilisation, ')
+          ..write('codeBarre: $codeBarre')
           ..write(')'))
         .toString();
   }
@@ -1317,6 +1364,7 @@ class Produit extends DataClass implements Insertable<Produit> {
     uniteDefautId,
     statut,
     dateDerniereUtilisation,
+    codeBarre,
   );
   @override
   bool operator ==(Object other) =>
@@ -1328,7 +1376,8 @@ class Produit extends DataClass implements Insertable<Produit> {
           other.typeGrandeur == this.typeGrandeur &&
           other.uniteDefautId == this.uniteDefautId &&
           other.statut == this.statut &&
-          other.dateDerniereUtilisation == this.dateDerniereUtilisation);
+          other.dateDerniereUtilisation == this.dateDerniereUtilisation &&
+          other.codeBarre == this.codeBarre);
 }
 
 class ProduitsCompanion extends UpdateCompanion<Produit> {
@@ -1339,6 +1388,7 @@ class ProduitsCompanion extends UpdateCompanion<Produit> {
   final Value<int> uniteDefautId;
   final Value<StatutProduit> statut;
   final Value<DateTime?> dateDerniereUtilisation;
+  final Value<String?> codeBarre;
   const ProduitsCompanion({
     this.id = const Value.absent(),
     this.nom = const Value.absent(),
@@ -1347,6 +1397,7 @@ class ProduitsCompanion extends UpdateCompanion<Produit> {
     this.uniteDefautId = const Value.absent(),
     this.statut = const Value.absent(),
     this.dateDerniereUtilisation = const Value.absent(),
+    this.codeBarre = const Value.absent(),
   });
   ProduitsCompanion.insert({
     this.id = const Value.absent(),
@@ -1356,6 +1407,7 @@ class ProduitsCompanion extends UpdateCompanion<Produit> {
     required int uniteDefautId,
     this.statut = const Value.absent(),
     this.dateDerniereUtilisation = const Value.absent(),
+    this.codeBarre = const Value.absent(),
   }) : nom = Value(nom),
        categorieId = Value(categorieId),
        typeGrandeur = Value(typeGrandeur),
@@ -1368,6 +1420,7 @@ class ProduitsCompanion extends UpdateCompanion<Produit> {
     Expression<int>? uniteDefautId,
     Expression<String>? statut,
     Expression<DateTime>? dateDerniereUtilisation,
+    Expression<String>? codeBarre,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1378,6 +1431,7 @@ class ProduitsCompanion extends UpdateCompanion<Produit> {
       if (statut != null) 'statut': statut,
       if (dateDerniereUtilisation != null)
         'date_derniere_utilisation': dateDerniereUtilisation,
+      if (codeBarre != null) 'code_barre': codeBarre,
     });
   }
 
@@ -1389,6 +1443,7 @@ class ProduitsCompanion extends UpdateCompanion<Produit> {
     Value<int>? uniteDefautId,
     Value<StatutProduit>? statut,
     Value<DateTime?>? dateDerniereUtilisation,
+    Value<String?>? codeBarre,
   }) {
     return ProduitsCompanion(
       id: id ?? this.id,
@@ -1399,6 +1454,7 @@ class ProduitsCompanion extends UpdateCompanion<Produit> {
       statut: statut ?? this.statut,
       dateDerniereUtilisation:
           dateDerniereUtilisation ?? this.dateDerniereUtilisation,
+      codeBarre: codeBarre ?? this.codeBarre,
     );
   }
 
@@ -1432,6 +1488,9 @@ class ProduitsCompanion extends UpdateCompanion<Produit> {
         dateDerniereUtilisation.value,
       );
     }
+    if (codeBarre.present) {
+      map['code_barre'] = Variable<String>(codeBarre.value);
+    }
     return map;
   }
 
@@ -1444,7 +1503,8 @@ class ProduitsCompanion extends UpdateCompanion<Produit> {
           ..write('typeGrandeur: $typeGrandeur, ')
           ..write('uniteDefautId: $uniteDefautId, ')
           ..write('statut: $statut, ')
-          ..write('dateDerniereUtilisation: $dateDerniereUtilisation')
+          ..write('dateDerniereUtilisation: $dateDerniereUtilisation, ')
+          ..write('codeBarre: $codeBarre')
           ..write(')'))
         .toString();
   }
@@ -3573,6 +3633,217 @@ class ArticlesCourseCompanion extends UpdateCompanion<ArticleCourse> {
   }
 }
 
+class $ReglagesTable extends Reglages with TableInfo<$ReglagesTable, Reglage> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReglagesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _cleMeta = const VerificationMeta('cle');
+  @override
+  late final GeneratedColumn<String> cle = GeneratedColumn<String>(
+    'cle',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 100,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valeurMeta = const VerificationMeta('valeur');
+  @override
+  late final GeneratedColumn<String> valeur = GeneratedColumn<String>(
+    'valeur',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [cle, valeur];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'reglage';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Reglage> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('cle')) {
+      context.handle(
+        _cleMeta,
+        cle.isAcceptableOrUnknown(data['cle']!, _cleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cleMeta);
+    }
+    if (data.containsKey('valeur')) {
+      context.handle(
+        _valeurMeta,
+        valeur.isAcceptableOrUnknown(data['valeur']!, _valeurMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valeurMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {cle};
+  @override
+  Reglage map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Reglage(
+      cle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cle'],
+      )!,
+      valeur: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}valeur'],
+      )!,
+    );
+  }
+
+  @override
+  $ReglagesTable createAlias(String alias) {
+    return $ReglagesTable(attachedDatabase, alias);
+  }
+}
+
+class Reglage extends DataClass implements Insertable<Reglage> {
+  final String cle;
+  final String valeur;
+  const Reglage({required this.cle, required this.valeur});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['cle'] = Variable<String>(cle);
+    map['valeur'] = Variable<String>(valeur);
+    return map;
+  }
+
+  ReglagesCompanion toCompanion(bool nullToAbsent) {
+    return ReglagesCompanion(cle: Value(cle), valeur: Value(valeur));
+  }
+
+  factory Reglage.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Reglage(
+      cle: serializer.fromJson<String>(json['cle']),
+      valeur: serializer.fromJson<String>(json['valeur']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'cle': serializer.toJson<String>(cle),
+      'valeur': serializer.toJson<String>(valeur),
+    };
+  }
+
+  Reglage copyWith({String? cle, String? valeur}) =>
+      Reglage(cle: cle ?? this.cle, valeur: valeur ?? this.valeur);
+  Reglage copyWithCompanion(ReglagesCompanion data) {
+    return Reglage(
+      cle: data.cle.present ? data.cle.value : this.cle,
+      valeur: data.valeur.present ? data.valeur.value : this.valeur,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Reglage(')
+          ..write('cle: $cle, ')
+          ..write('valeur: $valeur')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(cle, valeur);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Reglage &&
+          other.cle == this.cle &&
+          other.valeur == this.valeur);
+}
+
+class ReglagesCompanion extends UpdateCompanion<Reglage> {
+  final Value<String> cle;
+  final Value<String> valeur;
+  final Value<int> rowid;
+  const ReglagesCompanion({
+    this.cle = const Value.absent(),
+    this.valeur = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReglagesCompanion.insert({
+    required String cle,
+    required String valeur,
+    this.rowid = const Value.absent(),
+  }) : cle = Value(cle),
+       valeur = Value(valeur);
+  static Insertable<Reglage> custom({
+    Expression<String>? cle,
+    Expression<String>? valeur,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (cle != null) 'cle': cle,
+      if (valeur != null) 'valeur': valeur,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReglagesCompanion copyWith({
+    Value<String>? cle,
+    Value<String>? valeur,
+    Value<int>? rowid,
+  }) {
+    return ReglagesCompanion(
+      cle: cle ?? this.cle,
+      valeur: valeur ?? this.valeur,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (cle.present) {
+      map['cle'] = Variable<String>(cle.value);
+    }
+    if (valeur.present) {
+      map['valeur'] = Variable<String>(valeur.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReglagesCompanion(')
+          ..write('cle: $cle, ')
+          ..write('valeur: $valeur, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3587,6 +3858,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $RepasPlanifiesTable repasPlanifies = $RepasPlanifiesTable(this);
   late final $ArticlesCourseTable articlesCourse = $ArticlesCourseTable(this);
+  late final $ReglagesTable reglages = $ReglagesTable(this);
+  late final Index uxProduitCodeBarre = Index(
+    'ux_produit_code_barre',
+    'CREATE UNIQUE INDEX ux_produit_code_barre ON produit (code_barre)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3601,6 +3877,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     platIngredients,
     repasPlanifies,
     articlesCourse,
+    reglages,
+    uxProduitCodeBarre,
   ];
 }
 
@@ -4733,6 +5011,7 @@ typedef $$ProduitsTableCreateCompanionBuilder =
       required int uniteDefautId,
       Value<StatutProduit> statut,
       Value<DateTime?> dateDerniereUtilisation,
+      Value<String?> codeBarre,
     });
 typedef $$ProduitsTableUpdateCompanionBuilder =
     ProduitsCompanion Function({
@@ -4743,6 +5022,7 @@ typedef $$ProduitsTableUpdateCompanionBuilder =
       Value<int> uniteDefautId,
       Value<StatutProduit> statut,
       Value<DateTime?> dateDerniereUtilisation,
+      Value<String?> codeBarre,
     });
 
 final class $$ProduitsTableReferences
@@ -4891,6 +5171,11 @@ class $$ProduitsTableFilterComposer
 
   ColumnFilters<DateTime> get dateDerniereUtilisation => $composableBuilder(
     column: $table.dateDerniereUtilisation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get codeBarre => $composableBuilder(
+    column: $table.codeBarre,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5075,6 +5360,11 @@ class $$ProduitsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get codeBarre => $composableBuilder(
+    column: $table.codeBarre,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CategoriesTableOrderingComposer get categorieId {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -5150,6 +5440,9 @@ class $$ProduitsTableAnnotationComposer
     column: $table.dateDerniereUtilisation,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get codeBarre =>
+      $composableBuilder(column: $table.codeBarre, builder: (column) => column);
 
   $$CategoriesTableAnnotationComposer get categorieId {
     final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
@@ -5340,6 +5633,7 @@ class $$ProduitsTableTableManager
                 Value<int> uniteDefautId = const Value.absent(),
                 Value<StatutProduit> statut = const Value.absent(),
                 Value<DateTime?> dateDerniereUtilisation = const Value.absent(),
+                Value<String?> codeBarre = const Value.absent(),
               }) => ProduitsCompanion(
                 id: id,
                 nom: nom,
@@ -5348,6 +5642,7 @@ class $$ProduitsTableTableManager
                 uniteDefautId: uniteDefautId,
                 statut: statut,
                 dateDerniereUtilisation: dateDerniereUtilisation,
+                codeBarre: codeBarre,
               ),
           createCompanionCallback:
               ({
@@ -5358,6 +5653,7 @@ class $$ProduitsTableTableManager
                 required int uniteDefautId,
                 Value<StatutProduit> statut = const Value.absent(),
                 Value<DateTime?> dateDerniereUtilisation = const Value.absent(),
+                Value<String?> codeBarre = const Value.absent(),
               }) => ProduitsCompanion.insert(
                 id: id,
                 nom: nom,
@@ -5366,6 +5662,7 @@ class $$ProduitsTableTableManager
                 uniteDefautId: uniteDefautId,
                 statut: statut,
                 dateDerniereUtilisation: dateDerniereUtilisation,
+                codeBarre: codeBarre,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -7874,6 +8171,139 @@ typedef $$ArticlesCourseTableProcessedTableManager =
       ArticleCourse,
       PrefetchHooks Function({bool produitId, bool uniteId})
     >;
+typedef $$ReglagesTableCreateCompanionBuilder =
+    ReglagesCompanion Function({
+      required String cle,
+      required String valeur,
+      Value<int> rowid,
+    });
+typedef $$ReglagesTableUpdateCompanionBuilder =
+    ReglagesCompanion Function({
+      Value<String> cle,
+      Value<String> valeur,
+      Value<int> rowid,
+    });
+
+class $$ReglagesTableFilterComposer
+    extends Composer<_$AppDatabase, $ReglagesTable> {
+  $$ReglagesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get cle => $composableBuilder(
+    column: $table.cle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get valeur => $composableBuilder(
+    column: $table.valeur,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReglagesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReglagesTable> {
+  $$ReglagesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get cle => $composableBuilder(
+    column: $table.cle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get valeur => $composableBuilder(
+    column: $table.valeur,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReglagesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReglagesTable> {
+  $$ReglagesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get cle =>
+      $composableBuilder(column: $table.cle, builder: (column) => column);
+
+  GeneratedColumn<String> get valeur =>
+      $composableBuilder(column: $table.valeur, builder: (column) => column);
+}
+
+class $$ReglagesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReglagesTable,
+          Reglage,
+          $$ReglagesTableFilterComposer,
+          $$ReglagesTableOrderingComposer,
+          $$ReglagesTableAnnotationComposer,
+          $$ReglagesTableCreateCompanionBuilder,
+          $$ReglagesTableUpdateCompanionBuilder,
+          (Reglage, BaseReferences<_$AppDatabase, $ReglagesTable, Reglage>),
+          Reglage,
+          PrefetchHooks Function()
+        > {
+  $$ReglagesTableTableManager(_$AppDatabase db, $ReglagesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReglagesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReglagesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReglagesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> cle = const Value.absent(),
+                Value<String> valeur = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReglagesCompanion(cle: cle, valeur: valeur, rowid: rowid),
+          createCompanionCallback:
+              ({
+                required String cle,
+                required String valeur,
+                Value<int> rowid = const Value.absent(),
+              }) => ReglagesCompanion.insert(
+                cle: cle,
+                valeur: valeur,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReglagesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReglagesTable,
+      Reglage,
+      $$ReglagesTableFilterComposer,
+      $$ReglagesTableOrderingComposer,
+      $$ReglagesTableAnnotationComposer,
+      $$ReglagesTableCreateCompanionBuilder,
+      $$ReglagesTableUpdateCompanionBuilder,
+      (Reglage, BaseReferences<_$AppDatabase, $ReglagesTable, Reglage>),
+      Reglage,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7896,4 +8326,6 @@ class $AppDatabaseManager {
       $$RepasPlanifiesTableTableManager(_db, _db.repasPlanifies);
   $$ArticlesCourseTableTableManager get articlesCourse =>
       $$ArticlesCourseTableTableManager(_db, _db.articlesCourse);
+  $$ReglagesTableTableManager get reglages =>
+      $$ReglagesTableTableManager(_db, _db.reglages);
 }

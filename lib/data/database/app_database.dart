@@ -28,6 +28,7 @@ part 'app_database.g.dart';
     PlatIngredients,
     RepasPlanifies,
     ArticlesCourse,
+    Reglages,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -37,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -51,25 +52,28 @@ class AppDatabase extends _$AppDatabase {
     },
   );
 
-  /// Aucune migration à ce jour (schéma en version 1). Au premier changement
-  /// de schéma, désactiver les clés étrangères en tête (`PRAGMA foreign_keys
-  /// = OFF`, réactivées par `beforeOpen`), puis traiter chaque intervalle :
+  /// Migrations incrémentales, un `case` par palier `from` franchi.
   ///
-  /// ```dart
-  /// switch (from) {
-  ///   case 1:
-  ///     await m.addColumn(produits, produits.nouveauChamp);
-  ///     continue v2;
-  ///   v2:
-  ///   case 2:
-  ///     // ...
-  /// }
-  /// ```
+  /// Les ajouts de colonne nullable (`ADD COLUMN`) ne touchent pas aux clés
+  /// étrangères ni aux données : pas besoin de `PRAGMA foreign_keys = OFF`.
+  /// Pour une reconstruction de table, désactiver les FK en tête (elles sont
+  /// réactivées par `beforeOpen`).
+  ///
+  /// **v1 → v2** : ajout de `produit.code_barre` (nullable) + index UNIQUE
+  /// `ux_produit_code_barre` (les NULL restent multiples).
+  ///
+  /// **v2 → v3** : table `reglage` (clé/valeur) — consentement à la recherche
+  /// Open Food Facts. Cf. `Docs/poc-scan-code-barres.md` §4 & §5.7.
   Future<void> _onUpgrade(Migrator m, int from, int to) async {
-    throw UnsupportedError(
-      'Migration de la base v$from -> v$to non implémentée '
-      '(voir AppDatabase._onUpgrade).',
-    );
+    for (var palier = from; palier < to; palier++) {
+      switch (palier) {
+        case 1:
+          await m.addColumn(produits, produits.codeBarre);
+          await m.create(uxProduitCodeBarre);
+        case 2:
+          await m.createTable(reglages);
+      }
+    }
   }
 
   /// Ouvre la base fichier dans le répertoire applicatif (résolu par

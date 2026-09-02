@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,7 @@ import '../../../../shared/utils/dropdown.dart';
 import '../../../../shared/utils/exceptions.dart';
 import '../../../../shared/widgets/nom_dialog.dart';
 import '../providers/frigo_providers.dart';
+import '../widgets/barcode_scan_button.dart';
 
 /// Création ou modification d'un `Produit` du catalogue (cahier-des-charges.md
 /// §7.3). En modification, `typeGrandeur` n'est pas éditable (fixé à la
@@ -39,6 +41,7 @@ class _ProduitFormSheetState extends ConsumerState<_ProduitFormSheet> {
   late int? _uniteId = widget.produit?.uniteDefautId;
   late TypeGrandeur _typeGrandeur =
       widget.produit?.typeGrandeur ?? TypeGrandeur.masse;
+  late String? _codeBarre = widget.produit?.codeBarre;
 
   bool _envoiEnCours = false;
   String? _erreur;
@@ -77,6 +80,35 @@ class _ProduitFormSheetState extends ConsumerState<_ProduitFormSheet> {
               autofocus: !_modification,
               decoration: const InputDecoration(labelText: 'Nom du produit'),
               onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
+            InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Code-barres (optionnel)',
+                border: OutlineInputBorder(),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _codeBarre ?? 'Aucun',
+                      style: _codeBarre == null
+                          ? TextStyle(color: Theme.of(context).hintColor)
+                          : null,
+                    ),
+                  ),
+                  if (_codeBarre != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Retirer le code-barres',
+                      onPressed: () => setState(() => _codeBarre = null),
+                    ),
+                  BarcodeScanButton(
+                    label: 'Scanner',
+                    onCode: (code) => setState(() => _codeBarre = code),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             categories.when(
@@ -248,12 +280,14 @@ class _ProduitFormSheetState extends ConsumerState<_ProduitFormSheet> {
 
     try {
       final repo = ref.read(produitRepositoryProvider);
+      final codeBarre = _codeBarre?.trim().isEmpty ?? true ? null : _codeBarre;
       if (_modification) {
         await repo.update(
           widget.produit!.id,
           nom: _nomController.text.trim(),
           categorieId: _categorieId,
           uniteDefautId: _uniteId,
+          codeBarre: Value(codeBarre),
         );
       } else {
         await repo.create(
@@ -261,10 +295,13 @@ class _ProduitFormSheetState extends ConsumerState<_ProduitFormSheet> {
           categorieId: _categorieId!,
           typeGrandeur: _typeGrandeur,
           uniteDefautId: _uniteId!,
+          codeBarre: codeBarre,
         );
       }
       if (mounted) Navigator.of(context).pop();
     } on DuplicateNameException catch (e) {
+      if (mounted) setState(() => _erreur = e.message);
+    } on DuplicateBarcodeException catch (e) {
       if (mounted) setState(() => _erreur = e.message);
     } catch (e) {
       if (mounted) setState(() => _erreur = 'Erreur : $e');

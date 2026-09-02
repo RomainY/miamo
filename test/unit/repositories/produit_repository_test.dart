@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miamo/data/database/app_database.dart';
 import 'package:miamo/data/database/tables.dart';
@@ -179,5 +179,117 @@ void main() {
       await (db.select(db.plats)..where((t) => t.id.equals(platId))).get(),
       isNotEmpty,
     );
+  });
+
+  group('code-barres (v1.1)', () {
+    test('getByCodeBarre retrouve le produit, null si code inconnu', () async {
+      final cree = await repo.create(
+        nom: 'Yaourt nature',
+        categorieId: 1,
+        typeGrandeur: TypeGrandeur.masse,
+        uniteDefautId: 1,
+        codeBarre: '3033710065967',
+      );
+
+      final trouve = await repo.getByCodeBarre('3033710065967');
+      expect(trouve?.id, cree.id);
+      expect(await repo.getByCodeBarre('0000000000000'), isNull);
+    });
+
+    test('getByCodeBarre retourne aussi un produit archivé', () async {
+      final cree = await repo.create(
+        nom: 'Café moulu',
+        categorieId: 1,
+        typeGrandeur: TypeGrandeur.masse,
+        uniteDefautId: 1,
+        codeBarre: '3033710065912',
+      );
+      await repo.archiver(cree.id);
+
+      final trouve = await repo.getByCodeBarre('3033710065912');
+      expect(trouve?.id, cree.id);
+      expect(trouve?.statut, StatutProduit.archive);
+    });
+
+    test('create rejette un code-barres déjà utilisé', () async {
+      await repo.create(
+        nom: 'Lait demi-écrémé',
+        categorieId: 1,
+        typeGrandeur: TypeGrandeur.volume,
+        uniteDefautId: 3,
+        codeBarre: '3520836011234',
+      );
+
+      expect(
+        () => repo.create(
+          nom: 'Lait entier',
+          categorieId: 1,
+          typeGrandeur: TypeGrandeur.volume,
+          uniteDefautId: 3,
+          codeBarre: '3520836011234',
+        ),
+        throwsA(isA<DuplicateBarcodeException>()),
+      );
+    });
+
+    test('plusieurs produits sans code-barres coexistent', () async {
+      await repo.create(
+        nom: 'Tomate',
+        categorieId: 1,
+        typeGrandeur: TypeGrandeur.masse,
+        uniteDefautId: 1,
+      );
+      await repo.create(
+        nom: 'Carotte',
+        categorieId: 1,
+        typeGrandeur: TypeGrandeur.masse,
+        uniteDefautId: 1,
+      );
+
+      final tous = await repo.watchAll().first;
+      expect(tous.where((p) => p.codeBarre == null), hasLength(2));
+    });
+
+    test('update pose, puis retire le code-barres (tri-état Value)', () async {
+      final cree = await repo.create(
+        nom: 'Beurre doux',
+        categorieId: 1,
+        typeGrandeur: TypeGrandeur.masse,
+        uniteDefautId: 1,
+      );
+
+      // Value.absent() (défaut) : le code n'est pas touché.
+      await repo.update(cree.id, nom: 'Beurre doux 250g');
+      expect((await repo.getById(cree.id)).codeBarre, isNull);
+
+      // Value('...') : on pose un code.
+      await repo.update(cree.id, codeBarre: const Value('3256540001234'));
+      expect((await repo.getById(cree.id)).codeBarre, '3256540001234');
+
+      // Value(null) : on retire le code.
+      await repo.update(cree.id, codeBarre: const Value(null));
+      expect((await repo.getById(cree.id)).codeBarre, isNull);
+    });
+
+    test('update rejette un code déjà porté par un autre produit', () async {
+      await repo.create(
+        nom: 'Produit A',
+        categorieId: 1,
+        typeGrandeur: TypeGrandeur.masse,
+        uniteDefautId: 1,
+        codeBarre: '3017620422003',
+      );
+      final b = await repo.create(
+        nom: 'Produit B',
+        categorieId: 1,
+        typeGrandeur: TypeGrandeur.masse,
+        uniteDefautId: 1,
+      );
+
+      expect(
+        () => repo.update(b.id, codeBarre: const Value('3017620422003')),
+        throwsA(isA<DuplicateBarcodeException>()),
+      );
+    });
   });
 }

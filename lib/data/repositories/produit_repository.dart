@@ -67,16 +67,29 @@ class ProduitRepository extends BaseRepository {
     return (db.select(db.produits)..where((t) => t.id.equals(id))).getSingle();
   }
 
+  /// Reconnaissance locale d'un scan (v1.1) : retrouve le produit portant ce
+  /// code-barres, quel que soit son statut (`actif` ou `archive`). `null` si le
+  /// code est inconnu du catalogue. L'appelant décide quoi faire d'un produit
+  /// archivé (cf. `ajouter_produit_sheet.dart`).
+  Future<Produit?> getByCodeBarre(String codeBarre) {
+    return (db.select(db.produits)
+          ..where((t) => t.codeBarre.equals(codeBarre)))
+        .getSingleOrNull();
+  }
+
   /// Crée un produit (chemin B : nouveau produit créé à la volée, ou écran
   /// de gestion dédié). `typeGrandeur` est fixé définitivement à la création.
+  /// `codeBarre` (optionnel, v1.1) provient du scan ; unicité vérifiée.
   Future<Produit> create({
     required String nom,
     required int categorieId,
     required TypeGrandeur typeGrandeur,
     required int uniteDefautId,
+    String? codeBarre,
   }) async {
     await _verifierNomLibre(nom);
     await _verifierCoherenceUnite(uniteDefautId, typeGrandeur);
+    if (codeBarre != null) await _verifierCodeBarreLibre(codeBarre);
 
     final id = await db
         .into(db.produits)
@@ -87,6 +100,7 @@ class ProduitRepository extends BaseRepository {
             typeGrandeur: typeGrandeur,
             uniteDefautId: uniteDefautId,
             dateDerniereUtilisation: Value(DateTime.now()),
+            codeBarre: Value(codeBarre),
           ),
         );
     return getById(id);
@@ -94,11 +108,15 @@ class ProduitRepository extends BaseRepository {
 
   /// `typeGrandeur` n'est volontairement pas modifiable ici (fixe après
   /// création, cf. documentation-technique.md §2 "Produit").
+  ///
+  /// `codeBarre` est tri-état : `Value.absent()` (défaut) = inchangé,
+  /// `Value(null)` = code retiré, `Value('...')` = code posé/corrigé.
   Future<Produit> update(
     int id, {
     String? nom,
     int? categorieId,
     int? uniteDefautId,
+    Value<String?> codeBarre = const Value.absent(),
   }) async {
     if (nom != null) {
       await _verifierNomLibre(nom, exclureId: id);
@@ -106,6 +124,9 @@ class ProduitRepository extends BaseRepository {
     if (uniteDefautId != null) {
       final produit = await getById(id);
       await _verifierCoherenceUnite(uniteDefautId, produit.typeGrandeur);
+    }
+    if (codeBarre.present && codeBarre.value != null) {
+      await _verifierCodeBarreLibre(codeBarre.value!, exclureId: id);
     }
     await (db.update(db.produits)..where((t) => t.id.equals(id))).write(
       ProduitsCompanion(
@@ -116,6 +137,7 @@ class ProduitRepository extends BaseRepository {
         uniteDefautId: uniteDefautId == null
             ? const Value.absent()
             : Value(uniteDefautId),
+        codeBarre: codeBarre,
       ),
     );
     return getById(id);
@@ -213,6 +235,15 @@ class ProduitRepository extends BaseRepository {
     final existant = await query.getSingleOrNull();
     if (existant != null && existant.id != exclureId) {
       throw const DuplicateNameException('Ce produit existe déjà.');
+    }
+  }
+
+  Future<void> _verifierCodeBarreLibre(String codeBarre, {int? exclureId}) async {
+    final existant = await getByCodeBarre(codeBarre);
+    if (existant != null && existant.id != exclureId) {
+      throw DuplicateBarcodeException(
+        'Ce code-barres est déjà associé au produit « ${existant.nom} ».',
+      );
     }
   }
 

@@ -11,6 +11,33 @@
 > `produitsTousProvider`). Les mentions « aucun appel dans `lib/` » des §6.1/§6.2
 > concernant `archiver` / `desarchiver` / `supprimerDefinitivement` /
 > `previewSuppressionCascade` / `watchAll` ne sont donc plus d'actualité.
+>
+> **Mise à jour (v1.1 — scan de code-barres, 02/09/2026 ; cf.
+> `../Docs/poc-scan-code-barres.md`)** — plusieurs constats des §5.x évoluent :
+> - **§5.1 Réseau** : il existe désormais **un** appel réseau applicatif,
+>   facultatif et sur action utilisateur — `HttpOpenFoodFactsService`
+>   (`shared/services/open_food_facts_service.dart`, dépendance `http`) interroge
+>   `https://world.openfoodfacts.org` en HTTPS pour enrichir un produit scanné.
+>   Best-effort (ne lève jamais), délai borné, seul le code-barres est transmis,
+>   `User-Agent` sans donnée personnelle, exécuté uniquement après consentement
+>   explicite (`reglage.recherche_en_ligne_off`). Positionnement : « 100 %
+>   hors-ligne » → « offline-first » (l'app reste pleinement utilisable sans
+>   réseau). `INTERNET` est maintenant déclaré dans le manifest `main`.
+> - **§5.2 Stockage local** : `schemaVersion = 3` avec `_onUpgrade` réel
+>   (migrations v1→v2→v3, testées via `drift_dev schema` + `SchemaVerifier`,
+>   snapshots `drift_schemas/`). Nouvelle colonne `produit.code_barre`
+>   (nullable, index UNIQUE `ux_produit_code_barre`) et nouvelle table `reglage`
+>   (clé/valeur). Toujours pas de `SharedPreferences` : le consentement est
+>   stocké dans `reglage`.
+> - **§5.3 Permissions** : ajout de `CAMERA` (+ `uses-feature camera`
+>   `required=false`) et `INTERNET` au manifest `main` ; `NSCameraUsageDescription`
+>   ajouté à `ios/Runner/Info.plist`.
+> - **§5.5 / nouveaux fichiers** : `shared/services/barcode_scanner_service.dart`
+>   (+ `_providers`), `shared/services/open_food_facts_service.dart` (+
+>   `_providers`), `shared/utils/off_category_mapping.dart` (pur, testé),
+>   `data/repositories/reglage_repository.dart`, widgets
+>   `barcode_scan_button.dart` / `barcode_recognition_chip.dart` /
+>   `reglage_recherche_en_ligne_tile.dart` / `consentement_off_dialog.dart`.
 
 ---
 

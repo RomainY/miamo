@@ -18,6 +18,12 @@ class DuplicateNameException extends DomaineException {
   const DuplicateNameException(super.message);
 }
 
+/// Levée quand un code-barres scanné est déjà rattaché à un autre produit
+/// (index UNIQUE `ux_produit_code_barre`, cf. Docs/poc-scan-code-barres.md §5.3).
+class DuplicateBarcodeException extends DomaineException {
+  const DuplicateBarcodeException(super.message);
+}
+
 /// Levée lors d'une tentative de suppression de la zone racine ("Frigo",
 /// is_root = true) ou de la catégorie par défaut ("Non classé").
 class ElementProtegeException extends DomaineException {

@@ -4,6 +4,15 @@
          reprogrammation des notifications après redémarrage du téléphone. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Scan de code-barres à l'ajout d'un produit (évolution v1.1, cf.
+         Docs/poc-scan-code-barres.md). L'app reste pleinement utilisable sans :
+         `required="false"` n'exclut pas les appareils sans caméra du Play Store. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
+    <!-- Recherche facultative d'un produit scanné via l'API publique Open Food
+         Facts (évolution v1.1, offline-first : l'app fonctionne sans réseau). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Miamo"
         android:name="${applicationName}"

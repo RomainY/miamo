@@ -6,6 +6,7 @@ import 'categorie_repository.dart';
 import 'plat_repository.dart';
 import 'produit_frigo_repository.dart';
 import 'produit_repository.dart';
+import 'reglage_repository.dart';
 import 'repas_planifie_repository.dart';
 import 'unite_repository.dart';
 import 'zone_repository.dart';
@@ -43,4 +44,8 @@ final repasPlanifieRepositoryProvider = Provider<RepasPlanifieRepository>(
 
 final articleCourseRepositoryProvider = Provider<ArticleCourseRepository>(
   (ref) => ArticleCourseRepository(ref.watch(appDatabaseProvider)),
+);
+
+final reglageRepositoryProvider = Provider<ReglageRepository>(
+  (ref) => ReglageRepository(ref.watch(appDatabaseProvider)),
 );

@@ -5,12 +5,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/database/app_database.dart';
 import '../../../../data/database/tables.dart';
+import '../../../../data/repositories/reglage_repository.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/services/open_food_facts_providers.dart';
+import '../../../../shared/services/open_food_facts_service.dart';
 import '../../../../shared/utils/dropdown.dart';
 import '../../../../shared/utils/exceptions.dart';
+import '../../../../shared/utils/off_category_mapping.dart';
 import '../../../../shared/utils/quantite.dart';
 import '../../../../shared/widgets/nom_dialog.dart';
 import '../providers/frigo_providers.dart';
+import '../widgets/barcode_recognition_chip.dart';
+import '../widgets/barcode_scan_button.dart';
+import '../widgets/consentement_off_dialog.dart';
 
 /// N'autorise que des chiffres et un séparateur décimal (`.` ou `,`) dans un
 /// champ de quantité.
@@ -48,13 +55,28 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
   int? _categorieId;
   TypeGrandeur _typeGrandeur = TypeGrandeur.masse;
 
+  /// Code-barres scanné à rattacher au nouveau produit (chemin B). `null` si
+  /// l'ajout n'est pas passé par un scan, ou si le scan a retrouvé un produit
+  /// déjà au catalogue (chemin A).
+  String? _codeBarreScanne;
+
+  /// Indicateur de reconnaissance affiché après un scan (§5.8). `null` tant
+  /// qu'aucun scan n'a eu lieu.
+  ReconnaissanceProduit? _reconnaissance;
+
+  /// Nom de catégorie à proposer à la création (bucket Open Food Facts sans
+  /// correspondance dans le catalogue). `null` sinon.
+  String? _categorieAProposer;
+
   int? _zoneId;
   final _quantiteController = TextEditingController(text: '1');
   int? _uniteId;
   DateTime? _datePeremption;
 
   bool _envoiEnCours = false;
+  bool _scanEnCours = false;
   String? _erreur;
+  String? _messageScan;
 
   @override
   void dispose() {
@@ -89,6 +111,21 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
+            BarcodeScanButton(
+              onCode: _scanEnCours ? (_) {} : _onCodeScanne,
+            ),
+            if (_messageScan != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _messageScan!,
+                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+              ),
+            ],
+            if (_reconnaissance != null) ...[
+              const SizedBox(height: 8),
+              BarcodeRecognitionChip(reconnaissance: _reconnaissance!),
+            ],
+            const SizedBox(height: 12),
             SegmentedButton<bool>(
               segments: const [
                 ButtonSegment(value: false, label: Text('Produit existant')),
@@ -99,6 +136,8 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
                 _nouveauProduit = s.first;
                 _produitSelectionne = null;
                 _uniteId = null;
+                _reconnaissance = null;
+                _categorieAProposer = null;
               }),
             ),
             const SizedBox(height: 16),
@@ -253,6 +292,25 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (_codeBarreScanne != null) ...[
+          InputDecorator(
+            decoration: const InputDecoration(
+              labelText: 'Code-barres',
+              border: OutlineInputBorder(),
+            ),
+            child: Row(
+              children: [
+                Expanded(child: Text(_codeBarreScanne!)),
+                IconButton(
+                  icon: const Icon(Icons.clear),
+                  tooltip: 'Retirer le code-barres',
+                  onPressed: () => setState(() => _codeBarreScanne = null),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         TextField(
           controller: _nomController,
           decoration: const InputDecoration(labelText: 'Nom du produit'),
@@ -303,6 +361,15 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
           loading: () => const LinearProgressIndicator(),
           error: (e, _) => Text('Erreur : $e'),
         ),
+        if (_categorieAProposer != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              icon: const Icon(Icons.add),
+              label: Text('Créer la catégorie « $_categorieAProposer »'),
+              onPressed: _creerCategorieProposee,
+            ),
+          ),
         const SizedBox(height: 12),
         SegmentedButton<TypeGrandeur>(
           segments: const [
@@ -381,6 +448,174 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
     );
   }
 
+  /// Lecture d'un code-barres. D'abord une reconnaissance **locale**
+  /// (`getByCodeBarre`) ; si le code est inconnu du catalogue, une recherche
+  /// **en ligne** optionnelle (Open Food Facts) pré-remplit le formulaire.
+  Future<void> _onCodeScanne(String code) async {
+    setState(() {
+      _scanEnCours = true;
+      _erreur = null;
+      _messageScan = null;
+      _reconnaissance = null;
+      _categorieAProposer = null;
+    });
+    try {
+      final existant = await ref
+          .read(produitRepositoryProvider)
+          .getByCodeBarre(code);
+      if (!mounted) return;
+
+      if (existant != null && existant.statut == StatutProduit.actif) {
+        setState(() {
+          _nouveauProduit = false;
+          _produitSelectionne = existant;
+          _uniteId = existant.uniteDefautId;
+          _codeBarreScanne = null;
+          _reconnaissance = ReconnaissanceProduit.catalogueLocal;
+        });
+        return;
+      }
+      if (existant != null) {
+        setState(() {
+          _nouveauProduit = true;
+          _produitSelectionne = null;
+          _codeBarreScanne = code;
+          _erreur =
+              '« ${existant.nom} » correspond à ce code mais il est archivé. '
+              'Désarchivez-le, ou créez un nouveau produit.';
+        });
+        return;
+      }
+
+      setState(() {
+        _nouveauProduit = true;
+        _produitSelectionne = null;
+        _codeBarreScanne = code;
+      });
+      await _rechercherEnLigneEtPreremplir(code);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _erreur = 'La lecture du code-barres a échoué.');
+      }
+    } finally {
+      if (mounted) setState(() => _scanEnCours = false);
+    }
+  }
+
+  /// Recherche Open Food Facts (après consentement) et pré-remplissage du
+  /// formulaire « nouveau produit ». Best-effort : n'échoue jamais, tout champ
+  /// non déduit reste à la charge de l'utilisateur (indicateur §5.8).
+  Future<void> _rechercherEnLigneEtPreremplir(String code) async {
+    final reglages = ref.read(reglageRepositoryProvider);
+    var consentement = await reglages.lireBool(kReglageRechercheEnLigne);
+    if (!mounted) return;
+
+    if (consentement == null) {
+      final choix = await demanderConsentementOff(context);
+      if (!mounted) return;
+      if (choix != null) {
+        await reglages.ecrireBool(kReglageRechercheEnLigne, choix);
+        consentement = choix;
+      }
+    }
+
+    if (consentement != true) {
+      setState(
+        () => _messageScan = 'Code $code — produit à créer manuellement.',
+      );
+      return;
+    }
+
+    final resultat = await ref
+        .read(openFoodFactsServiceProvider)
+        .rechercher(code);
+    if (!mounted) return;
+
+    final tags = resultat.produit?.categoriesTags ?? const <String>[];
+    final bucket = resolveBucket(tags);
+    final quantite = parseQuantiteOff(resultat.produit?.quantiteBrute);
+    final reconnaissance = evaluerReconnaissance(
+      reseauDisponible: resultat.statut != OffStatut.indisponible,
+      offConnait: resultat.statut == OffStatut.trouve,
+      nomOff: resultat.produit?.nom,
+      bucket: bucket.bucket,
+      tagsOff: tags,
+      quantite: quantite,
+      quantiteBrute: resultat.produit?.quantiteBrute,
+    );
+
+    final categories =
+        ref.read(categoriesProvider).valueOrNull ?? const <Categorie>[];
+    final unites = ref.read(unitesProvider).valueOrNull ?? const <Unite>[];
+
+    setState(() {
+      _reconnaissance = reconnaissance;
+
+      if (resultat.statut != OffStatut.trouve) return;
+
+      final nom = resultat.produit?.nom;
+      if (nom != null && nom.isNotEmpty && _nomController.text.trim().isEmpty) {
+        _nomController.text = nom;
+      }
+
+      if (bucket.bucket != 'autre') {
+        final corr = mapperCategorie(
+          bucket.bucket,
+          categories.map((c) => c.nom),
+        );
+        if (corr.categorieExistante != null) {
+          _categorieId = categories
+              .firstWhereOrNull((c) => c.nom == corr.categorieExistante)
+              ?.id;
+        } else {
+          _categorieAProposer = corr.nomAProposer;
+        }
+      }
+
+      if (quantite.valeur != null && quantite.typeGrandeur != null) {
+        _typeGrandeur = quantite.typeGrandeur!;
+        _quantiteController.text = _formatQuantite(quantite.valeur!);
+        _uniteId = unites
+            .firstWhereOrNull(
+              (u) =>
+                  u.nom == quantite.uniteNom &&
+                  u.typeGrandeur == quantite.typeGrandeur,
+            )
+            ?.id;
+      }
+    });
+  }
+
+  static String _formatQuantite(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+
+  /// Crée en un tap la catégorie suggérée par le bucket Open Food Facts et la
+  /// sélectionne. Si elle existe déjà (course), on la sélectionne simplement.
+  Future<void> _creerCategorieProposee() async {
+    final nom = _categorieAProposer;
+    if (nom == null) return;
+    try {
+      final categorie = await ref
+          .read(categorieRepositoryProvider)
+          .create(nom: nom);
+      if (mounted) {
+        setState(() {
+          _categorieId = categorie.id;
+          _categorieAProposer = null;
+        });
+      }
+    } on DuplicateNameException {
+      final existante = (ref.read(categoriesProvider).valueOrNull ?? const [])
+          .firstWhereOrNull((c) => c.nom == nom);
+      if (mounted) {
+        setState(() {
+          _categorieId = existante?.id ?? _categorieId;
+          _categorieAProposer = null;
+        });
+      }
+    }
+  }
+
   bool _peutValider() {
     if (_zoneId == null || _uniteId == null) return false;
     if (parseQuantite(_quantiteController.text) == null) return false;
@@ -409,6 +644,7 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
               categorieId: _categorieId!,
               typeGrandeur: _typeGrandeur,
               uniteDefautId: _uniteId!,
+              codeBarre: _codeBarreScanne,
             );
         produitId = produit.id;
       } else {
@@ -427,6 +663,8 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
 
       if (mounted) Navigator.of(context).pop();
     } on DuplicateNameException catch (e) {
+      if (mounted) setState(() => _erreur = e.message);
+    } on DuplicateBarcodeException catch (e) {
       if (mounted) setState(() => _erreur = e.message);
     } catch (e) {
       if (mounted) setState(() => _erreur = 'Erreur : $e');

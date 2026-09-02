@@ -104,6 +104,7 @@ class Unites extends Table {
 /// instances physiques ([ProduitsFrigo]). `nom` unique ; `typeGrandeur` figé à
 /// la création. Voir documentation-technique.md §2 "Produit".
 @DataClassName('Produit')
+@TableIndex(name: 'ux_produit_code_barre', columns: {#codeBarre}, unique: true)
 class Produits extends Table {
   @override
   String get tableName => 'produit';
@@ -120,6 +121,14 @@ class Produits extends Table {
     Constant(StatutProduit.actif.name),
   )();
   DateTimeColumn get dateDerniereUtilisation => dateTime().nullable()();
+
+  /// Code-barres EAN‑13/EAN‑8/UPC‑A/ITF‑14 renseigné via le scan (évolution
+  /// v1.1, cf. Docs/poc-scan-code-barres.md). Sert de cache de reconnaissance :
+  /// un code déjà connu retrouve le produit sans réseau. Nullable — tous les
+  /// produits n'ont pas de code (vrac, fait maison) ; l'index UNIQUE ignore les
+  /// NULL (comportement SQLite standard), donc plusieurs produits « sans code »
+  /// coexistent. Ajouté par la migration de schéma v1 → v2.
+  TextColumn get codeBarre => text().withLength(min: 8, max: 14).nullable()();
 
   @override
   List<Set<Column>> get uniqueKeys => [
@@ -199,6 +208,23 @@ class RepasPlanifies extends Table {
   TextColumn get statut => textEnum<StatutRepas>().withDefault(
     Constant(StatutRepas.planifie.name),
   )();
+}
+
+/// Réglages applicatifs simples, stockés en clé/valeur texte (évolution v1.1).
+/// Volontairement générique : un seul enregistrement aujourd'hui, le
+/// consentement à la recherche en ligne Open Food Facts
+/// (`kReglageRechercheEnLigne`, cf. Docs/poc-scan-code-barres.md §5.7). Pas de
+/// `SharedPreferences` : tout l'état local reste dans l'unique base SQLite.
+@DataClassName('Reglage')
+class Reglages extends Table {
+  @override
+  String get tableName => 'reglage';
+
+  TextColumn get cle => text().withLength(min: 1, max: 100)();
+  TextColumn get valeur => text()();
+
+  @override
+  Set<Column> get primaryKey => {cle};
 }
 
 /// Ligne de la liste de courses. MVP v1 : `origine` toujours `manuel`. Peut
