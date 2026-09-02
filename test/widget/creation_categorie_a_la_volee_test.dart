@@ -51,14 +51,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // Saisit le nom de la catégorie et valide
-      await tester.enterText(find.widgetWithText(TextField, 'Nom'), 'Boissons');
+      await tester.enterText(find.widgetWithText(TextField, 'Nom'), 'Épicerie fine');
       await tester.pump();
       await tester.tap(find.widgetWithText(FilledButton, 'Valider'));
       await tester.pumpAndSettle();
 
       // Le dialogue doit être fermé et la catégorie sélectionnée dans la fiche
       expect(find.text('Valider'), findsNothing);
-      expect(find.text('Boissons'), findsOneWidget);
+      expect(find.text('Épicerie fine'), findsOneWidget);
 
       // Valide la création du produit
       await tester.tap(find.widgetWithText(FilledButton, 'Créer le produit'));

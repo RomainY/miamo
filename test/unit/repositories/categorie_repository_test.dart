@@ -24,9 +24,9 @@ void main() {
   });
 
   test('create rejette un nom déjà utilisé', () async {
-    await repo.create(nom: 'Frais');
+    await repo.create(nom: 'Bricolage');
     expect(
-      () => repo.create(nom: 'Frais'),
+      () => repo.create(nom: 'Bricolage'),
       throwsA(isA<DuplicateNameException>()),
     );
   });
@@ -47,7 +47,7 @@ void main() {
   });
 
   test('delete réaffecte les produits vers "Non classé"', () async {
-    final categorie = await repo.create(nom: 'Frais');
+    final categorie = await repo.create(nom: 'Bricolage');
     final produitId = await db
         .into(db.produits)
         .insert(

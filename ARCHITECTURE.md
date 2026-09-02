@@ -23,12 +23,13 @@
 >   explicite (`reglage.recherche_en_ligne_off`). Positionnement : « 100 %
 >   hors-ligne » → « offline-first » (l'app reste pleinement utilisable sans
 >   réseau). `INTERNET` est maintenant déclaré dans le manifest `main`.
-> - **§5.2 Stockage local** : `schemaVersion = 3` avec `_onUpgrade` réel
->   (migrations v1→v2→v3, testées via `drift_dev schema` + `SchemaVerifier`,
+> - **§5.2 Stockage local** : `schemaVersion = 4` avec `_onUpgrade` réel
+>   (migrations v1→v2→v3→v4, testées via `drift_dev schema` + `SchemaVerifier`,
 >   snapshots `drift_schemas/`). Nouvelle colonne `produit.code_barre`
->   (nullable, index UNIQUE `ux_produit_code_barre`) et nouvelle table `reglage`
->   (clé/valeur). Toujours pas de `SharedPreferences` : le consentement est
->   stocké dans `reglage`.
+>   (nullable, index UNIQUE `ux_produit_code_barre`), nouvelle table `reglage`
+>   (clé/valeur), et injection d'un jeu de **catégories de base**
+>   (`seeders.dart` / migration v3→v4 `INSERT OR IGNORE`). Toujours pas de
+>   `SharedPreferences` : le consentement est stocké dans `reglage`.
 > - **§5.3 Permissions** : ajout de `CAMERA` (+ `uses-feature camera`
 >   `required=false`) et `INTERNET` au manifest `main` ; `NSCameraUsageDescription`
 >   ajouté à `ios/Runner/Info.plist`.

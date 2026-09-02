@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miamo/data/database/app_database.dart';
+import 'package:miamo/data/database/seeders.dart' show categoriesDeBase;
 import 'package:miamo/data/database/tables.dart';
 
 import '../../generated/schema.dart';
@@ -11,6 +12,7 @@ import '../../generated/schema.dart';
 ///  - **v1 → v2** : `produit.code_barre` (nullable) + index UNIQUE
 ///    `ux_produit_code_barre`.
 ///  - **v2 → v3** : table `reglage` (clé/valeur).
+///  - **v3 → v4** : injection des `categoriesDeBase` (INSERT OR IGNORE).
 ///
 /// Snapshots (`drift_schemas/`) et helpers (`test/generated/`) régénérés via :
 ///   dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/
@@ -22,17 +24,34 @@ void main() {
     verifier = SchemaVerifier(GeneratedHelper());
   });
 
-  for (final from in [1, 2]) {
-    test('le schéma après migration v$from → v3 correspond au schéma généré', () async {
+  for (final from in [1, 2, 3]) {
+    test('le schéma après migration v$from → v4 correspond au schéma généré', () async {
       final connection = await verifier.startAt(from);
       final db = AppDatabase.forTesting(connection);
       addTearDown(db.close);
 
-      await verifier.migrateAndValidate(db, 3);
+      await verifier.migrateAndValidate(db, 4);
     });
   }
 
-  test('v1 → v3 préserve les produits existants (code_barre = NULL)', () async {
+  test('v3 → v4 injecte les catégories de base sans doublonner les existantes', () async {
+    final schema = await verifier.schemaAt(3);
+    // L'utilisateur avait déjà créé « Frais » à la main.
+    schema.rawDatabase.execute(
+      "INSERT INTO categorie (nom, icone, est_par_defaut) VALUES ('Frais', 'category', 0)",
+    );
+
+    final db = AppDatabase.forTesting(schema.newConnection());
+    addTearDown(db.close);
+    await verifier.migrateAndValidate(db, 4);
+
+    final noms =
+        (await db.select(db.categories).get()).map((c) => c.nom).toList();
+    expect(noms, containsAll(categoriesDeBase));
+    expect(noms.where((n) => n == 'Frais'), hasLength(1));
+  });
+
+  test('v1 → v4 préserve les produits existants (code_barre = NULL)', () async {
     final schema = await verifier.schemaAt(1);
     schema.rawDatabase.execute(
       "INSERT INTO categorie (id, nom, icone, est_par_defaut) VALUES (1, 'Non classé', 'category', 1)",
@@ -46,7 +65,7 @@ void main() {
 
     final db = AppDatabase.forTesting(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 3);
+    await verifier.migrateAndValidate(db, 4);
 
     final produits = await db.select(db.produits).get();
     expect(produits, hasLength(1));
@@ -65,7 +84,7 @@ void main() {
 
     final db = AppDatabase.forTesting(schema.newConnection());
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 3);
+    await verifier.migrateAndValidate(db, 4);
 
     ProduitsCompanion produit(String nom, {String? code}) =>
         ProduitsCompanion.insert(
@@ -95,11 +114,11 @@ void main() {
     );
   });
 
-  test('v2 → v3 : la table reglage est utilisable après migration', () async {
+  test('v2 → v4 : la table reglage est utilisable après migration', () async {
     final connection = await verifier.startAt(2);
     final db = AppDatabase.forTesting(connection);
     addTearDown(db.close);
-    await verifier.migrateAndValidate(db, 3);
+    await verifier.migrateAndValidate(db, 4);
 
     await db
         .into(db.reglages)

@@ -38,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,7 +63,12 @@ class AppDatabase extends _$AppDatabase {
   /// `ux_produit_code_barre` (les NULL restent multiples).
   ///
   /// **v2 → v3** : table `reglage` (clé/valeur) — consentement à la recherche
-  /// Open Food Facts. Cf. `Docs/poc-scan-code-barres.md` §4 & §5.7.
+  /// Open Food Facts.
+  ///
+  /// **v3 → v4** : injection des [categoriesDeBase] (`INSERT OR IGNORE`, ne
+  /// touche pas aux catégories déjà créées par l'utilisateur) — aide au
+  /// classement des produits, notamment depuis le scan.
+  /// Cf. `Docs/poc-scan-code-barres.md` §4 & §5.4.
   Future<void> _onUpgrade(Migrator m, int from, int to) async {
     for (var palier = from; palier < to; palier++) {
       switch (palier) {
@@ -72,6 +77,13 @@ class AppDatabase extends _$AppDatabase {
           await m.create(uxProduitCodeBarre);
         case 2:
           await m.createTable(reglages);
+        case 3:
+          for (final nom in categoriesDeBase) {
+            await into(categories).insert(
+              CategoriesCompanion.insert(nom: nom),
+              mode: InsertMode.insertOrIgnore,
+            );
+          }
       }
     }
   }
