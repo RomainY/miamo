@@ -1,10 +1,14 @@
 # Miamo
 
-Application mobile **100 % locale / hors-ligne** de gestion du frigo, de
-planification des repas et de liste de courses.
+Application mobile **offline-first** de gestion du frigo, de planification des
+repas et de liste de courses.
 
-- Pas de compte, pas de backend, pas d'appel réseau, pas de synchronisation.
-- Toutes les données vivent dans une base SQLite sur l'appareil.
+- Pas de compte, pas de backend, pas de synchronisation : toutes les données
+  vivent dans une base SQLite sur l'appareil.
+- Pleinement utilisable sans réseau. Un seul appel sortant facultatif existe
+  (enrichissement d'un produit scanné via [Open Food
+  Facts](https://world.openfoodfacts.org)), déclenché uniquement sur action
+  utilisateur et après consentement explicite (réglage réversible).
 
 Cible principale : Android. iOS / Web / Windows sont générés par le template mais
 non validés (les notifications ne sont configurées que pour Android).
@@ -20,10 +24,11 @@ non validés (les notifications ne sont configurées que pour Android).
 | Persistance | SQLite via [Drift](https://drift.simonbinder.eu) (`drift` + `drift_flutter`) |
 | Notifications | `flutter_local_notifications` + `timezone` + `flutter_timezone` (péremption) |
 | Calendrier | `table_calendar` |
+| Scan code-barres | `mobile_scanner` (local) + `http` (Open Food Facts, best-effort) |
 | i18n | Français uniquement (`flutter_localizations`, `intl`) |
 
-Versions de référence (voir aussi la section *Environnement*) : Flutter 3.44.x /
-Dart 3.12.x.
+Versions de référence (voir aussi la section *Environnement*) : Flutter 3.44.8 /
+Dart 3.12.x — épinglées dans [`.fvmrc`](.fvmrc).
 
 ---
 
@@ -42,10 +47,12 @@ flutter run
 
 ### Pré-requis
 
-- Flutter SDK installé (`flutter doctor` au vert pour Android).
+- Flutter SDK installé (`flutter doctor` au vert pour Android) — voir
+  [`.fvmrc`](.fvmrc) pour la version pinnée ; utiliser [FVM](https://fvm.app)
+  ou un SDK système de la même version.
 - Un émulateur Android ou un appareil physique en mode développeur.
 - Aucune clé d'API, aucun fichier `.env`, aucune variable d'environnement :
-  l'application ne dépend d'aucun service externe.
+  Open Food Facts est appelé anonymement (code-barres uniquement, pas de clé).
 
 ---
 
@@ -103,14 +110,20 @@ les repositories.
 
 Détail complet : [`ARCHITECTURE.md`](ARCHITECTURE.md).
 Audit qualité / sécurité : [`AUDIT_REPORT.md`](AUDIT_REPORT.md).
+Roadmap post-MVP : [`../Docs/specs-app-frigo.md`](../Docs/specs-app-frigo.md#4-roadmap--fonctionnalités-et-style-à-venir-post-mvp)
+(prochain chantier : auto-génération de la liste de courses à partir des
+produits périmés/épuisés et des ingrédients manquants des plats planifiés).
 
-### Modèle de données (9 tables)
+### Modèle de données (10 tables)
 
 `categorie`, `zone`, `unite`, `produit`, `produit_frigo`, `plat`,
-`plat_ingredient`, `repas_planifie`, `article_course`.
+`plat_ingredient`, `repas_planifie`, `reglage`, `article_course`.
 
-Le schéma est en **version 1**. Au premier lancement, un *seed* crée la
-catégorie « Non classé », la zone racine « Frigo » et les unités de base.
+Le schéma est en **version 4** (migrations couvertes par `SchemaVerifier`,
+snapshots dans `drift_schemas/`). Au premier lancement, un *seed* crée la zone
+racine « Frigo », les unités de base et un jeu de catégories courantes (dont
+les noms correspondent aux buckets Open Food Facts, pour une
+pré-sélection directe des produits scannés).
 
 Spécifications fonctionnelles et techniques détaillées : dossier `../Docs/`
 (`cahier-des-charges.md`, `documentation-technique.md`).
@@ -119,16 +132,18 @@ Spécifications fonctionnelles et techniques détaillées : dossier `../Docs/`
 
 ## Tests
 
-- Unitaires : `test/unit/repositories/` (base `NativeDatabase.memory()`) +
-  `test/unit/utils/`.
-- Widget : `test/widget_test.dart` (démarrage de l'app).
+- Unitaires : `test/unit/repositories/` (base `NativeDatabase.memory()`),
+  `test/unit/domain/`, `test/unit/services/`, `test/unit/utils/` et
+  `test/unit/database/` (migrations, via `SchemaVerifier`).
+- Widget : `test/widget/` + `test/widget_test.dart` (démarrage de l'app).
 - Lancer : `flutter test` (ou `flutter test --coverage` puis ouvrir
-  `coverage/lcov.info`).
+  `coverage/lcov.info`). 123 tests verts au dernier commit.
 
 ---
 
 ## Environnement
 
-La version de Flutter n'est pas encore épinglée. Recommandé : ajouter un
-`.fvmrc` ([FVM](https://fvm.app)) ou documenter ici la version exacte utilisée
-par l'équipe, pour des builds reproductibles.
+Version de Flutter épinglée dans [`.fvmrc`](.fvmrc) (actuellement 3.44.8), pour
+des builds reproductibles. Utiliser [FVM](https://fvm.app) (`fvm flutter ...`)
+ou un SDK système de la même version — le SDK local n'est pas versionné
+(`.fvm/` est ignoré).
