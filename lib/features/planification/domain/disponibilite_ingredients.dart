@@ -241,6 +241,70 @@ List<RepasPlanifieDetail> ordonnerPourAllocation(
   });
 }
 
+/// Manque agrégé pour un produit sur l'ensemble des repas planifiés, en
+/// unité de base de son `type_grandeur` — brique du module Courses
+/// (`Docs/poc-liste-courses-auto.md` §3.1, suggestion `suggestionPlanification`).
+/// [repasIds] liste les repas à l'origine du manque (transparence UI, non
+/// dédupliqués au-delà de l'ordre d'apparition), pour construire une raison
+/// affichable (« Pour : Gratin de courgettes (09/09)... »).
+class ManqueParProduit {
+  final double quantiteBase;
+  final List<int> repasIds;
+
+  const ManqueParProduit({required this.quantiteBase, required this.repasIds});
+}
+
+/// Agrège, par produit, le manque cumulé sur tous les [repasPlanifies] (déjà
+/// filtrés au statut `planifie` par l'appelant, comme pour
+/// [calculerDisponibilites]) une fois le stock alloué par ordre chronologique
+/// — même allocation cumulée que les badges de disponibilité, réutilisée telle
+/// quelle pour que suggestion et badge restent cohérents entre eux.
+Map<int, ManqueParProduit> calculerManquesBaseParProduit({
+  required List<RepasPlanifieDetail> repasPlanifies,
+  required List<InstanceFrigoDetail> stock,
+  required Map<int, List<PlatIngredient>> ingredientsParPlat,
+  required Map<int, Unite> unitesParId,
+}) {
+  final pool = construirePool(stock);
+  final quantites = <int, double>{};
+  final repasParProduit = <int, List<int>>{};
+
+  for (final repas in ordonnerPourAllocation(repasPlanifies)) {
+    final besoins = _besoins(
+      repas.plat,
+      repas.produit,
+      repas.repas.portions,
+      ingredientsParPlat,
+      unitesParId,
+    );
+    for (final besoin in besoins) {
+      final grandeur = besoin.unite.typeGrandeur;
+      final besoinBase = besoin.quantite * besoin.unite.facteurVersBase;
+      final dispoBase = pool.disponible(besoin.produitId, grandeur);
+      final consomme = dispoBase < besoinBase ? dispoBase : besoinBase;
+      if (consomme > 0) pool.retirer(besoin.produitId, grandeur, consomme);
+
+      final manqueBase = besoinBase - consomme;
+      if (manqueBase > _epsilon) {
+        quantites.update(
+          besoin.produitId,
+          (v) => v + manqueBase,
+          ifAbsent: () => manqueBase,
+        );
+        (repasParProduit[besoin.produitId] ??= []).add(repas.repas.id);
+      }
+    }
+  }
+
+  return {
+    for (final produitId in quantites.keys)
+      produitId: ManqueParProduit(
+        quantiteBase: quantites[produitId]!,
+        repasIds: repasParProduit[produitId] ?? const [],
+      ),
+  };
+}
+
 /// Allocation cumulée : parcourt les repas planifiés par date croissante (puis
 /// id), en réservant le stock au fur et à mesure. Un repas peut donc manquer
 /// parce qu'un repas antérieur a déjà consommé le pool.

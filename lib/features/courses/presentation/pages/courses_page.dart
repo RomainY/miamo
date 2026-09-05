@@ -4,22 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/database/tables.dart';
 import '../providers/courses_providers.dart';
 import '../widgets/article_course_tile.dart';
+import '../widgets/suggestions_section.dart';
 import 'ajouter_article_sheet.dart';
 
-/// Écran principal du module Courses — MVP v1 manuel uniquement
-/// (cahier-des-charges.md §3.3 / §7.6).
+/// Écran principal du module Courses (cahier-des-charges.md §3.3 / §7.6) :
+/// suggestions calculées à la volée en tête (`Docs/poc-liste-courses-auto.md`),
+/// puis la liste à acheter/achetés, ajout manuel inchangé.
 class CoursesPage extends ConsumerWidget {
   const CoursesPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final articles = ref.watch(articlesCourseProvider);
+    final suggestions = ref.watch(suggestionsAffichablesProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Courses')),
       body: articles.when(
         data: (liste) {
-          if (liste.isEmpty) {
+          if (liste.isEmpty && suggestions.isEmpty) {
             return const Center(child: Text('Liste de courses vide.'));
           }
           final aAcheter = liste
@@ -31,6 +34,7 @@ class CoursesPage extends ConsumerWidget {
 
           return ListView(
             children: [
+              const SuggestionsSection(),
               if (aAcheter.isNotEmpty) ...[
                 const _EnTeteSection('À acheter'),
                 for (final detail in aAcheter)

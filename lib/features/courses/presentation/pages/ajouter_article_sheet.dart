@@ -230,11 +230,7 @@ class _AjouterArticleSheetState extends ConsumerState<_AjouterArticleSheet> {
 
       await ref
           .read(articleCourseRepositoryProvider)
-          .ajouterManuel(
-            produitId: produitId,
-            quantite: quantite,
-            uniteId: uniteId,
-          );
+          .ajouter(produitId: produitId, quantite: quantite, uniteId: uniteId);
       if (mounted) Navigator.of(context).pop();
     } on DuplicateNameException catch (e) {
       if (mounted) setState(() => _erreur = e.message);

@@ -113,4 +113,57 @@ void main() {
       isNull,
     );
   });
+
+  group('watchHistoriqueRecent (poc-liste-courses-auto.md §3.2)', () {
+    test('inclut consomme et jete, exclut une suppression directe', () async {
+      final consomme = await repo.create(
+        produitId: produitId,
+        zoneId: 1,
+        quantite: 1,
+        uniteId: 1,
+      );
+      final jete = await repo.create(
+        produitId: produitId,
+        zoneId: 1,
+        quantite: 1,
+        uniteId: 1,
+      );
+      final supprime = await repo.create(
+        produitId: produitId,
+        zoneId: 1,
+        quantite: 1,
+        uniteId: 1,
+      );
+
+      await repo.marquerConsomme(consomme.id);
+      await repo.marquerJete(jete.id);
+      await repo.supprimerInstance(supprime.id);
+
+      final historique = await repo
+          .watchHistoriqueRecent(DateTime.now().subtract(const Duration(days: 1)))
+          .first;
+
+      expect(historique, hasLength(2));
+      expect(
+        historique.map((h) => h.statut),
+        containsAll([StatutProduitFrigo.consomme, StatutProduitFrigo.jete]),
+      );
+    });
+
+    test('exclut ce qui est antérieur à la borne [depuis]', () async {
+      final instance = await repo.create(
+        produitId: produitId,
+        zoneId: 1,
+        quantite: 1,
+        uniteId: 1,
+      );
+      await repo.marquerConsomme(instance.id);
+
+      final historique = await repo
+          .watchHistoriqueRecent(DateTime.now().add(const Duration(days: 1)))
+          .first;
+
+      expect(historique, isEmpty);
+    });
+  });
 }

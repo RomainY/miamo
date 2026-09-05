@@ -52,12 +52,14 @@ class ArticleCourseRepository extends BaseRepository {
     )..where((t) => t.id.equals(id))).getSingle();
   }
 
-  /// MVP v1 : seule l'origine `manuel` est exposée
-  /// (documentation-technique.md §2 "ArticleCourse").
-  Future<ArticleCourse> ajouterManuel({
+  /// Ajoute un article à la liste — `manuel` (ajout depuis la sheet) par
+  /// défaut, ou une origine de suggestion confirmée par l'utilisateur
+  /// (`Docs/poc-liste-courses-auto.md` §2 : jamais écrit avant confirmation).
+  Future<ArticleCourse> ajouter({
     required int produitId,
     required double quantite,
     required int uniteId,
+    OrigineArticle origine = OrigineArticle.manuel,
   }) async {
     final id = await db
         .into(db.articlesCourse)
@@ -66,6 +68,7 @@ class ArticleCourseRepository extends BaseRepository {
             produitId: produitId,
             quantite: quantite,
             uniteId: uniteId,
+            origine: Value(origine),
           ),
         );
     return getById(id);

@@ -33,11 +33,20 @@ class ArticleCourseTile extends ConsumerWidget {
                     .marquerAchete(article.id),
               ),
       ),
-      title: Text(
-        detail.produit.nom,
-        style: achete
-            ? const TextStyle(decoration: TextDecoration.lineThrough)
-            : null,
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              detail.produit.nom,
+              overflow: TextOverflow.ellipsis,
+              style: achete
+                  ? const TextStyle(decoration: TextDecoration.lineThrough)
+                  : null,
+            ),
+          ),
+          _OrigineIndicateur(origine: article.origine),
+        ],
       ),
       subtitle: Text('${formatQuantite(article.quantite)} ${detail.unite.nom}'),
       trailing: Row(
@@ -60,6 +69,42 @@ class ArticleCourseTile extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Petit repère d'origine (rien pour un ajout manuel) — transparence sur les
+/// articles issus d'une suggestion confirmée
+/// (`Docs/poc-liste-courses-auto.md` §6 "micro-repère par champ").
+class _OrigineIndicateur extends StatelessWidget {
+  final OrigineArticle origine;
+  const _OrigineIndicateur({required this.origine});
+
+  @override
+  Widget build(BuildContext context) {
+    final (icone, tooltip) = switch (origine) {
+      OrigineArticle.manuel => (null, null),
+      OrigineArticle.suggestionPlanification => (
+        Icons.restaurant_outlined,
+        'Suggéré pour un repas planifié',
+      ),
+      OrigineArticle.suggestionRupture => (
+        Icons.repeat,
+        'Suggéré par rachat fréquent',
+      ),
+    };
+    if (icone == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Tooltip(
+        message: tooltip,
+        child: Icon(
+          icone,
+          size: 15,
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }

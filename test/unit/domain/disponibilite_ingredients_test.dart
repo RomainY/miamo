@@ -324,4 +324,112 @@ void main() {
     );
     expect(encore!.ok, isTrue);
   });
+
+  group('calculerManquesBaseParProduit (module Courses)', () {
+    test('agrège le manque de deux repas pour le même produit', () async {
+      final riz = await creerProduit('Riz');
+      final plat = await platRepo.create(
+        nom: 'Riz',
+        portionsDefaut: 1,
+        ingredients: [IngredientInput(produitId: riz, quantite: 300, uniteId: 1)],
+      );
+      await repasRepo.planifier(
+        date: DateTime(2026, 9, 1),
+        platId: plat.id,
+        portions: 1,
+      );
+      await repasRepo.planifier(
+        date: DateTime(2026, 9, 2),
+        platId: plat.id,
+        portions: 1,
+      );
+
+      final stock = await frigoRepo.watchEnStock().first;
+      final repas = await repasRepo.watchPlanifiesDetail().first;
+      final ingredientsParPlat = <int, List<PlatIngredient>>{
+        plat.id: await db.select(db.platIngredients).get(),
+      };
+      final unites = {for (final u in await db.select(db.unites).get()) u.id: u};
+
+      final manques = calculerManquesBaseParProduit(
+        repasPlanifies: repas,
+        stock: stock,
+        ingredientsParPlat: ingredientsParPlat,
+        unitesParId: unites,
+      );
+
+      // Aucun stock : 300 g + 300 g = 600 g manquants, en base (gramme = 1).
+      expect(manques[riz]!.quantiteBase, 600);
+      expect(manques[riz]!.repasIds, hasLength(2));
+    });
+
+    test('le stock déjà consommé par un 1er repas réduit le manque du 2e', () async {
+      final riz = await creerProduit('Riz');
+      await frigoRepo.create(produitId: riz, zoneId: 1, quantite: 300, uniteId: 1);
+      final plat = await platRepo.create(
+        nom: 'Riz',
+        portionsDefaut: 1,
+        ingredients: [IngredientInput(produitId: riz, quantite: 300, uniteId: 1)],
+      );
+      await repasRepo.planifier(
+        date: DateTime(2026, 9, 1),
+        platId: plat.id,
+        portions: 1,
+      );
+      await repasRepo.planifier(
+        date: DateTime(2026, 9, 2),
+        platId: plat.id,
+        portions: 1,
+      );
+
+      final stock = await frigoRepo.watchEnStock().first;
+      final repas = await repasRepo.watchPlanifiesDetail().first;
+      final ingredientsParPlat = <int, List<PlatIngredient>>{
+        plat.id: await db.select(db.platIngredients).get(),
+      };
+      final unites = {for (final u in await db.select(db.unites).get()) u.id: u};
+
+      final manques = calculerManquesBaseParProduit(
+        repasPlanifies: repas,
+        stock: stock,
+        ingredientsParPlat: ingredientsParPlat,
+        unitesParId: unites,
+      );
+
+      // 300 g de stock couvrent le 1er repas ; seul le 2e (300 g) manque.
+      expect(manques[riz]!.quantiteBase, 300);
+      expect(manques[riz]!.repasIds, hasLength(1));
+    });
+
+    test('stock suffisant pour tous les repas -> produit absent du résultat', () async {
+      final riz = await creerProduit('Riz');
+      await frigoRepo.create(produitId: riz, zoneId: 1, quantite: 1000, uniteId: 1);
+      final plat = await platRepo.create(
+        nom: 'Riz',
+        portionsDefaut: 1,
+        ingredients: [IngredientInput(produitId: riz, quantite: 300, uniteId: 1)],
+      );
+      await repasRepo.planifier(
+        date: DateTime(2026, 9, 1),
+        platId: plat.id,
+        portions: 1,
+      );
+
+      final stock = await frigoRepo.watchEnStock().first;
+      final repas = await repasRepo.watchPlanifiesDetail().first;
+      final ingredientsParPlat = <int, List<PlatIngredient>>{
+        plat.id: await db.select(db.platIngredients).get(),
+      };
+      final unites = {for (final u in await db.select(db.unites).get()) u.id: u};
+
+      final manques = calculerManquesBaseParProduit(
+        repasPlanifies: repas,
+        stock: stock,
+        ingredientsParPlat: ingredientsParPlat,
+        unitesParId: unites,
+      );
+
+      expect(manques, isEmpty);
+    });
+  });
 }

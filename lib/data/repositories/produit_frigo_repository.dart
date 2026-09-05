@@ -21,6 +21,27 @@ class InstanceFrigoDetail {
   });
 }
 
+/// Une occurrence `consomme`/`jete` récente d'un produit, brique de
+/// l'heuristique de suggestion "rachat fréquent"
+/// (`Docs/poc-liste-courses-auto.md` §3.2). Les suppressions directes
+/// (`supprimerInstance`) n'en font jamais partie : `dateStatut` n'est posée
+/// que par `marquerConsomme`/`marquerJete`.
+class HistoriqueStatutProduit {
+  final int produitId;
+  final StatutProduitFrigo statut;
+  final DateTime dateStatut;
+  final double quantite;
+  final int uniteId;
+
+  const HistoriqueStatutProduit({
+    required this.produitId,
+    required this.statut,
+    required this.dateStatut,
+    required this.quantite,
+    required this.uniteId,
+  });
+}
+
 /// Instances physiques stockées en zone (cahier-des-charges.md §7.4).
 class ProduitFrigoRepository extends BaseRepository {
   const ProduitFrigoRepository(super.db);
@@ -69,6 +90,34 @@ class ProduitFrigoRepository extends BaseRepository {
             ),
           )
           .toList(),
+    );
+  }
+
+  /// Historique `consomme`/`jete` depuis [depuis] (bornes incluses), toutes
+  /// zones/produits confondus — brique brute pour l'heuristique de
+  /// suggestion "rachat fréquent" (agrégation par produit faite côté domaine,
+  /// pas ici). Voir [HistoriqueStatutProduit].
+  Stream<List<HistoriqueStatutProduit>> watchHistoriqueRecent(
+    DateTime depuis,
+  ) {
+    final query = db.select(db.produitsFrigo)
+      ..where(
+        (t) =>
+            t.dateStatut.isBiggerOrEqualValue(depuis) &
+            (t.statut.equalsValue(StatutProduitFrigo.consomme) |
+                t.statut.equalsValue(StatutProduitFrigo.jete)),
+      );
+    return query.watch().map(
+      (lignes) => [
+        for (final l in lignes)
+          HistoriqueStatutProduit(
+            produitId: l.produitId,
+            statut: l.statut,
+            dateStatut: l.dateStatut!,
+            quantite: l.quantite,
+            uniteId: l.uniteId,
+          ),
+      ],
     );
   }
 

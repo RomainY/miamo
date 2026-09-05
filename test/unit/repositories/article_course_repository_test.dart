@@ -26,9 +26,9 @@ void main() {
   tearDown(() => db.close());
 
   test(
-    'ajouterManuel crée un article origine=manuel, statut=a_acheter',
+    'ajouter (défaut manuel) crée un article origine=manuel, statut=a_acheter',
     () async {
-      final article = await repo.ajouterManuel(
+      final article = await repo.ajouter(
         produitId: produitId,
         quantite: 1000,
         uniteId: 3,
@@ -38,8 +38,18 @@ void main() {
     },
   );
 
+  test('ajouter avec origine suggestion pose la bonne origine', () async {
+    final article = await repo.ajouter(
+      produitId: produitId,
+      quantite: 1000,
+      uniteId: 3,
+      origine: OrigineArticle.suggestionRupture,
+    );
+    expect(article.origine, OrigineArticle.suggestionRupture);
+  });
+
   test('marquerAchete change le statut', () async {
-    final article = await repo.ajouterManuel(
+    final article = await repo.ajouter(
       produitId: produitId,
       quantite: 1000,
       uniteId: 3,
@@ -52,7 +62,7 @@ void main() {
   test(
     'renvoyerVersFrigo crée une instance en zone et conserve l\'article',
     () async {
-      final article = await repo.ajouterManuel(
+      final article = await repo.ajouter(
         produitId: produitId,
         quantite: 1000,
         uniteId: 3,
