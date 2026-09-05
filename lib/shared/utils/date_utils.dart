@@ -4,23 +4,20 @@ import '../theme/app_theme.dart';
 import 'constants.dart';
 
 /// Date/heure locale de déclenchement de la notification de péremption pour
-/// [datePeremption] ([joursAvantNotification] jours avant, à
-/// [heureNotification]h) — `null` si ce moment est déjà passé (pas de
-/// notification à programmer). Logique pure (pas de fuseau horaire, pas de
-/// plugin) pour rester testable indépendamment de `NotificationService`.
+/// [datePeremption] ([joursAvant] jours avant, à [heure]h) — `null` si ce
+/// moment est déjà passé (pas de notification à programmer). Logique pure
+/// (pas de fuseau horaire, pas de plugin) pour rester testable indépendamment
+/// de `NotificationService`. [joursAvant]/[heure] sont réglables depuis
+/// l'écran Paramètres (v1.2, `Docs/poc-liste-courses-auto.md` §11) ; les
+/// constantes de `constants.dart` ne servent plus que de valeur par défaut.
 DateTime? dateDeclenchementNotification(
   DateTime datePeremption, {
   DateTime? maintenant,
+  int joursAvant = joursAvantNotification,
+  int heure = heureNotification,
 }) {
-  final jour = datePeremption.subtract(
-    const Duration(days: joursAvantNotification),
-  );
-  final declenchement = DateTime(
-    jour.year,
-    jour.month,
-    jour.day,
-    heureNotification,
-  );
+  final jour = datePeremption.subtract(Duration(days: joursAvant));
+  final declenchement = DateTime(jour.year, jour.month, jour.day, heure);
   if (declenchement.isBefore(maintenant ?? DateTime.now())) return null;
   return declenchement;
 }

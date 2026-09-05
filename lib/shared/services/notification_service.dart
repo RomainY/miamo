@@ -6,6 +6,7 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../data/repositories/produit_frigo_repository.dart';
+import '../utils/constants.dart';
 import '../utils/date_utils.dart';
 
 /// Notifications locales de péremption imminente (cahier-des-charges.md §4),
@@ -13,8 +14,9 @@ import '../utils/date_utils.dart';
 /// d'alarmes du système.
 ///
 /// ⚠️ Règle non spécifiée par le cahier des charges : une notification est
-/// programmée [joursAvantNotification] jours avant la date de péremption, à
-/// [heureNotification]h. À ajuster si besoin (cf. `shared/utils/constants.dart`).
+/// programmée [joursAvant] jours avant la date de péremption, à [heure]h ;
+/// réglable depuis l'écran Paramètres (v1.2), défauts dans
+/// `shared/utils/constants.dart`.
 class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -55,7 +57,11 @@ class NotificationService {
   /// le plugin de notifications n'est pas disponible sur la plateforme courante
   /// (ex. tests, desktop) : une notification manquée ne doit jamais faire
   /// planter l'app.
-  Future<void> resynchroniser(List<InstanceFrigoDetail> instances) async {
+  Future<void> resynchroniser(
+    List<InstanceFrigoDetail> instances, {
+    int joursAvant = joursAvantNotification,
+    int heure = heureNotification,
+  }) async {
     try {
       await _assurerInitialisation();
       await _plugin.cancelAll();
@@ -67,6 +73,8 @@ class NotificationService {
           instanceId: detail.instance.id,
           produitNom: detail.produit.nom,
           datePeremption: datePeremption,
+          joursAvant: joursAvant,
+          heure: heure,
         );
       }
     } catch (e, stack) {
@@ -83,8 +91,14 @@ class NotificationService {
     required int instanceId,
     required String produitNom,
     required DateTime datePeremption,
+    required int joursAvant,
+    required int heure,
   }) async {
-    final declenchement = _dateDeclenchement(datePeremption);
+    final declenchement = _dateDeclenchement(
+      datePeremption,
+      joursAvant: joursAvant,
+      heure: heure,
+    );
     if (declenchement == null) return;
 
     await _plugin.zonedSchedule(
@@ -103,8 +117,16 @@ class NotificationService {
     );
   }
 
-  tz.TZDateTime? _dateDeclenchement(DateTime datePeremption) {
-    final locale = dateDeclenchementNotification(datePeremption);
+  tz.TZDateTime? _dateDeclenchement(
+    DateTime datePeremption, {
+    required int joursAvant,
+    required int heure,
+  }) {
+    final locale = dateDeclenchementNotification(
+      datePeremption,
+      joursAvant: joursAvant,
+      heure: heure,
+    );
     if (locale == null) return null;
     return tz.TZDateTime(
       tz.local,

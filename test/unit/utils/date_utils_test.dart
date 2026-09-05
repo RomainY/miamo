@@ -31,6 +31,17 @@ void main() {
       );
       expect(declenchement, isNull);
     });
+
+    test('joursAvant/heure réglables (écran Paramètres, v1.2) remplacent '
+        'les valeurs par défaut', () {
+      final declenchement = dateDeclenchementNotification(
+        DateTime(2026, 9, 10),
+        maintenant: DateTime(2026, 9, 1),
+        joursAvant: 0,
+        heure: 20,
+      );
+      expect(declenchement, DateTime(2026, 9, 10, 20));
+    });
   });
 
   group('joursRestants', () {

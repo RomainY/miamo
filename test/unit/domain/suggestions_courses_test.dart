@@ -7,7 +7,6 @@ import 'package:miamo/data/repositories/produit_frigo_repository.dart';
 import 'package:miamo/data/repositories/produit_repository.dart';
 import 'package:miamo/data/repositories/repas_planifie_repository.dart';
 import 'package:miamo/features/courses/domain/suggestions_courses.dart';
-import 'package:miamo/features/planification/domain/disponibilite_ingredients.dart';
 
 import '../repositories/test_database.dart';
 
@@ -63,7 +62,7 @@ void main() {
         portions: 1,
       );
 
-      final repasDetail = (await repasRepo.watchPlanifiesDetail().first);
+      final repasDetail = await repasRepo.watchPlanifiesDetail().first;
       final ingredients = <int, List<PlatIngredient>>{
         plat.id: await db.select(db.platIngredients).get(),
       };

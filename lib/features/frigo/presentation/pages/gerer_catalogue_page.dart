@@ -9,9 +9,9 @@ import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/utils/exceptions.dart';
 import '../../../../shared/widgets/action_feedback.dart';
 import '../../../../shared/widgets/nom_dialog.dart';
+import '../../../parametres/presentation/widgets/reglages_sheet.dart';
 import '../providers/frigo_providers.dart';
 import '../widgets/category_chips_bar.dart';
-import '../widgets/reglage_recherche_en_ligne_tile.dart';
 import 'produit_form_sheet.dart';
 
 /// Gestion CRUD du catalogue — catégories, zones et produits
@@ -35,11 +35,10 @@ class GererCataloguePage extends StatelessWidget {
               onPressed: () => showModalBottomSheet<void>(
                 context: context,
                 showDragHandle: true,
-                builder: (_) => const SafeArea(
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 8),
-                    child: ReglageRechercheEnLigneTile(),
-                  ),
+                isScrollControlled: true,
+                builder: (_) => const FractionallySizedBox(
+                  heightFactor: 0.85,
+                  child: ReglagesSheet(),
                 ),
               ),
             ),

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../shared/services/reglages_peremption_providers.dart';
 import '../../../../shared/utils/constants.dart';
 import '../../../../shared/utils/date_utils.dart';
 import '../providers/frigo_providers.dart';
 
-/// Bandeau d'alerte listant les produits qui périment bientôt (≤
-/// [seuilAlerteBandeauJours] jours, ou déjà périmés), indépendamment du
-/// filtre actif sur l'écran Frigo. Rien ne s'affiche si aucun produit n'est
-/// concerné.
+/// Bandeau d'alerte listant les produits qui périment bientôt (≤ seuil réglé
+/// par l'utilisateur, cf. écran Paramètres — [seuilAlerteBandeauJours] par
+/// défaut, ou déjà périmés), indépendamment du filtre actif sur l'écran
+/// Frigo. Rien ne s'affiche si aucun produit n'est concerné.
 class ExpirationWarningBanner extends ConsumerWidget {
   const ExpirationWarningBanner({super.key});
 
@@ -16,10 +17,13 @@ class ExpirationWarningBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final instances = ref.watch(instancesEnStockGlobalProvider).valueOrNull;
     if (instances == null) return const SizedBox.shrink();
+    final seuil =
+        ref.watch(seuilAlerteBandeauJoursProvider).valueOrNull ??
+        seuilAlerteBandeauJours;
 
     final proches = instances.where((d) {
       final date = d.instance.datePeremption;
-      return date != null && joursRestants(date) <= seuilAlerteBandeauJours;
+      return date != null && joursRestants(date) <= seuil;
     }).toList();
     if (proches.isEmpty) return const SizedBox.shrink();
 
