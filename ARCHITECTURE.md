@@ -39,6 +39,26 @@
 >   `data/repositories/reglage_repository.dart`, widgets
 >   `barcode_scan_button.dart` / `barcode_recognition_chip.dart` /
 >   `reglage_recherche_en_ligne_tile.dart` / `consentement_off_dialog.dart`.
+>
+> **Mise à jour (v1.2 — liste de courses auto + écran Paramètres, 05/09/2026 ;
+> cf. `../Docs/poc-liste-courses-auto.md`)** :
+> - Les deux origines `suggestionPlanification` / `suggestionRupture` de
+>   `ArticlesCourse.origine`, scaffoldées mais inutilisées depuis le MVP, sont
+>   désormais produites. Aucune migration de schéma : les suggestions sont
+>   **calculées à la volée** (jamais écrites tant que non confirmées) —
+>   `features/courses/domain/suggestions_courses.dart` (pur), qui réutilise
+>   l'agrégation `calculerManquesBaseParProduit` ajoutée à
+>   `features/planification/domain/disponibilite_ingredients.dart`.
+> - Nouvelle feature `features/parametres/` : `ReglagesSheet` regroupe tous les
+>   réglages (interrupteurs de suggestion, seuils de rupture, seuils de
+>   péremption, recherche OFF déplacée depuis `gerer_catalogue_page.dart`).
+>   Pas de nouveau point d'entrée navigation : réutilise le bouton « Réglages »
+>   déjà présent sur l'écran Catalogue.
+> - `ReglageRepository` étendu (`lireInt`/`ecrireInt`/`observerInt`) : les
+>   seuils autrefois figés dans `shared/utils/constants.dart` (péremption :
+>   bandeau, notification) en deviennent la valeur de repli, la valeur réelle
+>   venant de `reglage` une fois réglée par l'utilisateur.
+> - `version: 1.1.0+2` → `1.2.0+3`.
 
 ---
 
