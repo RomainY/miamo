@@ -1,10 +1,14 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/reglage_repository.dart';
 import '../../../../data/repositories/repository_providers.dart';
+import '../../../../shared/services/notification_providers.dart';
+import '../../../../shared/services/reglages_peremption_providers.dart';
 import '../../../../shared/utils/constants.dart' as constantes;
+import '../../../../shared/utils/date_utils.dart';
 import '../../../courses/presentation/providers/courses_providers.dart';
 import '../../../frigo/presentation/widgets/reglage_recherche_en_ligne_tile.dart';
 
@@ -82,6 +86,11 @@ class ReglagesSheet extends StatelessWidget {
           const Divider(height: 24),
           const _EnTete('Scan de produit'),
           const ReglageRechercheEnLigneTile(),
+          if (kDebugMode) ...[
+            const Divider(height: 24),
+            const _EnTete('Debug — notifications (visible en debug uniquement)'),
+            const _DebugNotificationsSection(),
+          ],
         ],
       ),
     );
@@ -221,3 +230,175 @@ final reglageIntProvider =
           .watch(reglageRepositoryProvider)
           .observerInt(params.cle, defaut: params.defaut);
     });
+
+/// Outils de test des notifications de péremption — **visibles en debug
+/// uniquement** (`kDebugMode`, jamais en release). Ajoutés le 07/09/2026
+/// suite à la correction de règle : une notification = un rappel quotidien
+/// de `joursAvant` jours avant la péremption jusqu'au lendemain inclus, plus
+/// difficile à vérifier "en vrai" qu'une notification isolée.
+class _DebugNotificationsSection extends ConsumerStatefulWidget {
+  const _DebugNotificationsSection();
+
+  @override
+  ConsumerState<_DebugNotificationsSection> createState() =>
+      _DebugNotificationsSectionState();
+}
+
+class _DebugNotificationsSectionState
+    extends ConsumerState<_DebugNotificationsSection> {
+  DateTime _peremptionApercu = DateTime.now().add(const Duration(days: 3));
+
+  @override
+  Widget build(BuildContext context) {
+    final joursAvant =
+        ref.watch(joursAvantNotificationProvider).valueOrNull ??
+        constantes.joursAvantNotification;
+    final heure =
+        ref.watch(heureNotificationProvider).valueOrNull ??
+        constantes.heureNotification;
+    // maintenant très ancien : l'aperçu montre tout le calendrier de rappels,
+    // y compris ceux qui seraient déjà passés pour de vrai.
+    final apercu = datesDeclenchementNotification(
+      _peremptionApercu,
+      maintenant: DateTime(2000),
+      joursAvant: joursAvant,
+      heure: heure,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          title: const Text('Envoyer une notification maintenant'),
+          subtitle: const Text('Vérifie le rendu, le son, le canal.'),
+          trailing: FilledButton(
+            onPressed: () => _executer(
+              () => ref
+                  .read(notificationServiceProvider)
+                  .envoyerNotificationTest(),
+              'Notification envoyée.',
+            ),
+            child: const Text('Envoyer'),
+          ),
+        ),
+        ListTile(
+          title: const Text('Programmer dans 10 secondes'),
+          subtitle: const Text(
+            'Vérifie le pipeline réel de planification (fuseau, réveil).',
+          ),
+          trailing: FilledButton(
+            onPressed: () => _executer(
+              () => ref
+                  .read(notificationServiceProvider)
+                  .programmerNotificationTest(const Duration(seconds: 10)),
+              'Programmée pour dans 10 s.',
+            ),
+            child: const Text('Programmer'),
+          ),
+        ),
+        ListTile(
+          title: const Text('Notifications actuellement programmées'),
+          subtitle: const Text('Réelles + tests confondus.'),
+          trailing: OutlinedButton(
+            onPressed: _voirProgrammees,
+            child: const Text('Voir'),
+          ),
+        ),
+        const Divider(height: 16),
+        ListTile(
+          title: const Text('Aperçu du calendrier de rappels'),
+          subtitle: Text(
+            'Pour une péremption fictive le ${_fmtDate(_peremptionApercu)}, '
+            'avec les réglages actuels (J-$joursAvant, ${heure}h).',
+          ),
+          trailing: TextButton(
+            onPressed: _choisirDateApercu,
+            child: const Text('Changer la date'),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: apercu.isEmpty
+              ? const Text('Aucun rappel (période entièrement passée).')
+              : Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final d in apercu) Chip(label: Text(_fmtDateHeure(d))),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _executer(
+    Future<void> Function() action,
+    String messageSucces,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await action();
+      messenger.showSnackBar(SnackBar(content: Text(messageSucces)));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Échec : $e')));
+    }
+  }
+
+  Future<void> _voirProgrammees() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final liste = await ref
+          .read(notificationServiceProvider)
+          .notificationsProgrammees();
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('${liste.length} notification(s) programmée(s)'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: liste.isEmpty
+                ? const Text('Aucune.')
+                : ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final n in liste)
+                        ListTile(
+                          dense: true,
+                          title: Text(n.title ?? '(sans titre)'),
+                          subtitle: Text('#${n.id} · ${n.body ?? ''}'),
+                        ),
+                    ],
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Échec : $e')));
+    }
+  }
+
+  Future<void> _choisirDateApercu() async {
+    final choisie = await showDatePicker(
+      context: context,
+      initialDate: _peremptionApercu,
+      firstDate: DateTime.now().subtract(const Duration(days: 30)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (choisie != null) setState(() => _peremptionApercu = choisie);
+  }
+
+  String _fmtDate(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/'
+      '${d.month.toString().padLeft(2, '0')}/'
+      '${d.year}';
+
+  String _fmtDateHeure(DateTime d) => '${_fmtDate(d)} ${d.hour}h';
+}

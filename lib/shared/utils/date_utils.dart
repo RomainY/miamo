@@ -3,23 +3,35 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'constants.dart';
 
-/// Date/heure locale de déclenchement de la notification de péremption pour
-/// [datePeremption] ([joursAvant] jours avant, à [heure]h) — `null` si ce
-/// moment est déjà passé (pas de notification à programmer). Logique pure
-/// (pas de fuseau horaire, pas de plugin) pour rester testable indépendamment
-/// de `NotificationService`. [joursAvant]/[heure] sont réglables depuis
-/// l'écran Paramètres (v1.2, `Docs/poc-liste-courses-auto.md` §11) ; les
-/// constantes de `constants.dart` ne servent plus que de valeur par défaut.
-DateTime? dateDeclenchementNotification(
+/// Dates/heures locales de déclenchement des notifications de péremption
+/// pour [datePeremption] : **une par jour**, de [joursAvant] jours avant la
+/// péremption jusqu'au **lendemain** de la péremption inclus — pas une
+/// notification isolée à J-[joursAvant] (règle corrigée le 07/09/2026 :
+/// [joursAvant] fixe le début du rappel quotidien, pas son unique
+/// occurrence). Exemple : péremption le 10, [joursAvant] = 2, [heure] = 9 →
+/// rappels le 8, 9, 10 et 11 à 9h.
+///
+/// Seuls les déclenchements pas encore passés sont renvoyés (liste vide si
+/// tous le sont déjà). Logique pure (pas de fuseau horaire, pas de plugin)
+/// pour rester testable indépendamment de `NotificationService`.
+/// [joursAvant]/[heure] sont réglables depuis l'écran Paramètres (v1.2,
+/// `Docs/poc-liste-courses-auto.md` §11) ; les constantes de
+/// `constants.dart` ne servent plus que de valeur par défaut.
+List<DateTime> datesDeclenchementNotification(
   DateTime datePeremption, {
   DateTime? maintenant,
   int joursAvant = joursAvantNotification,
   int heure = heureNotification,
 }) {
-  final jour = datePeremption.subtract(Duration(days: joursAvant));
-  final declenchement = DateTime(jour.year, jour.month, jour.day, heure);
-  if (declenchement.isBefore(maintenant ?? DateTime.now())) return null;
-  return declenchement;
+  final debut = datePeremption.subtract(Duration(days: joursAvant));
+  final maintenantEffectif = maintenant ?? DateTime.now();
+  // joursAvant jours avant, + le jour de péremption, + le lendemain.
+  final nombreDeRappels = joursAvant + 2;
+
+  return [
+    for (var offset = 0; offset < nombreDeRappels; offset++)
+      DateTime(debut.year, debut.month, debut.day + offset, heure),
+  ].where((d) => !d.isBefore(maintenantEffectif)).toList();
 }
 
 /// Nombre de jours entre aujourd'hui et [date] (négatif si passé), en

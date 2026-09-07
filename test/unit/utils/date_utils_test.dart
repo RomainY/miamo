@@ -5,42 +5,61 @@ import 'package:miamo/shared/utils/date_utils.dart';
 DateTime _dans(int jours) => DateTime.now().add(Duration(days: jours));
 
 void main() {
-  group('dateDeclenchementNotification', () {
-    test('programme la notification joursAvantNotification jours avant, '
-        'à heureNotification h', () {
-      final declenchement = dateDeclenchementNotification(
+  group('datesDeclenchementNotification', () {
+    test('un rappel par jour de joursAvant jours avant jusqu\'au lendemain '
+        'de la péremption inclus (règle corrigée le 07/09/2026)', () {
+      final dates = datesDeclenchementNotification(
         DateTime(2026, 9, 10),
         maintenant: DateTime(2026, 9, 1),
       );
-      expect(declenchement, DateTime(2026, 9, 8, 9));
+      // joursAvantNotification=2, heureNotification=9 par défaut : 8, 9, 10,
+      // 11 septembre à 9h (2 avant + le jour J + le lendemain).
+      expect(dates, [
+        DateTime(2026, 9, 8, 9),
+        DateTime(2026, 9, 9, 9),
+        DateTime(2026, 9, 10, 9),
+        DateTime(2026, 9, 11, 9),
+      ]);
     });
 
-    test('retourne null si le déclenchement est déjà passé', () {
-      final declenchement = dateDeclenchementNotification(
+    test('joursAvant=0 : seulement le jour J et le lendemain', () {
+      final dates = datesDeclenchementNotification(
+        DateTime(2026, 9, 10),
+        maintenant: DateTime(2026, 9, 1),
+        joursAvant: 0,
+      );
+      expect(dates, [DateTime(2026, 9, 10, 9), DateTime(2026, 9, 11, 9)]);
+    });
+
+    test('ne renvoie que les rappels pas encore passés', () {
+      final dates = datesDeclenchementNotification(
+        DateTime(2026, 9, 10),
+        maintenant: DateTime(2026, 9, 9, 12), // après le rappel du 9 à 9h
+      );
+      expect(dates, [DateTime(2026, 9, 10, 9), DateTime(2026, 9, 11, 9)]);
+    });
+
+    test('liste vide si tous les rappels sont déjà passés', () {
+      final dates = datesDeclenchementNotification(
         DateTime(2026, 9, 3),
-        maintenant: DateTime(2026, 9, 5),
+        maintenant: DateTime(2026, 9, 10),
       );
-      expect(declenchement, isNull);
-    });
-
-    test('retourne null pour une péremption trop proche (déclenchement déjà '
-        "passé aujourd'hui)", () {
-      final declenchement = dateDeclenchementNotification(
-        DateTime(2026, 9, 5),
-        maintenant: DateTime(2026, 9, 4, 10),
-      );
-      expect(declenchement, isNull);
+      expect(dates, isEmpty);
     });
 
     test('joursAvant/heure réglables (écran Paramètres, v1.2) remplacent '
         'les valeurs par défaut', () {
-      final declenchement = dateDeclenchementNotification(
+      final dates = datesDeclenchementNotification(
         DateTime(2026, 9, 10),
         maintenant: DateTime(2026, 9, 1),
-        joursAvant: 0,
+        joursAvant: 1,
         heure: 20,
       );
-      expect(declenchement, DateTime(2026, 9, 10, 20));
+      expect(dates, [
+        DateTime(2026, 9, 9, 20),
+        DateTime(2026, 9, 10, 20),
+        DateTime(2026, 9, 11, 20),
+      ]);
     });
   });
 

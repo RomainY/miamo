@@ -13,14 +13,33 @@ import '../utils/date_utils.dart';
 /// 100% offline — aucune dépendance réseau, juste le planificateur
 /// d'alarmes du système.
 ///
-/// ⚠️ Règle non spécifiée par le cahier des charges : une notification est
-/// programmée [joursAvant] jours avant la date de péremption, à [heure]h ;
-/// réglable depuis l'écran Paramètres (v1.2), défauts dans
-/// `shared/utils/constants.dart`.
+/// ⚠️ Règle non spécifiée par le cahier des charges, corrigée le 07/09/2026 :
+/// **un rappel par jour**, de [joursAvant] jours avant la date de péremption
+/// jusqu'au lendemain de la péremption inclus, à [heure]h (pas une
+/// notification isolée à J-[joursAvant]) — cf. `date_utils.dart`
+/// `datesDeclenchementNotification`. Réglable depuis l'écran Paramètres
+/// (v1.2), défauts dans `shared/utils/constants.dart`.
 class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
   bool _initialise = false;
+
+  /// Canal unique de l'app, partagé par les vraies notifications et les
+  /// notifications de test (§ outils de debug ci-dessous).
+  static const _details = NotificationDetails(
+    android: AndroidNotificationDetails(
+      'peremption',
+      'Péremption',
+      channelDescription: 'Alerte de péremption imminente',
+    ),
+  );
+
+  /// Identifiants réservés aux notifications de test, hors de la plage
+  /// utilisée par [_planifierPourInstance] (`instanceId * 1000 + offset`,
+  /// avec `instanceId` positif et `offset` borné par la fenêtre de rappel —
+  /// jamais assez grand pour les atteindre en usage réel).
+  static const _idTestImmediat = 900000001;
+  static const _idTestProgramme = 900000002;
 
   Future<void> _assurerInitialisation() async {
     if (_initialise) return;
@@ -87,6 +106,10 @@ class NotificationService {
     }
   }
 
+  /// Programme un rappel par jour (cf. note de tête de fichier) : un
+  /// identifiant distinct par jour de la fenêtre (`instanceId * 1000 +
+  /// offset`) puisqu'une seule instance peut désormais porter plusieurs
+  /// notifications programmées simultanément.
   Future<void> _planifierPourInstance({
     required int instanceId,
     required String produitNom,
@@ -94,51 +117,84 @@ class NotificationService {
     required int joursAvant,
     required int heure,
   }) async {
-    final declenchement = _dateDeclenchement(
+    final declenchements = _datesDeclenchement(
       datePeremption,
       joursAvant: joursAvant,
       heure: heure,
     );
-    if (declenchement == null) return;
 
-    await _plugin.zonedSchedule(
-      id: instanceId,
-      title: 'Ça périme bientôt',
-      body: '$produitNom périme le ${_formatDate(datePeremption)}.',
-      scheduledDate: declenchement,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'peremption',
-          'Péremption',
-          channelDescription: 'Alerte de péremption imminente',
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-    );
+    for (var offset = 0; offset < declenchements.length; offset++) {
+      await _plugin.zonedSchedule(
+        id: instanceId * 1000 + offset,
+        title: 'Ça périme bientôt',
+        body: '$produitNom périme le ${_formatDate(datePeremption)}.',
+        scheduledDate: declenchements[offset],
+        notificationDetails: _details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    }
   }
 
-  tz.TZDateTime? _dateDeclenchement(
+  List<tz.TZDateTime> _datesDeclenchement(
     DateTime datePeremption, {
     required int joursAvant,
     required int heure,
   }) {
-    final locale = dateDeclenchementNotification(
+    final locales = datesDeclenchementNotification(
       datePeremption,
       joursAvant: joursAvant,
       heure: heure,
     );
-    if (locale == null) return null;
-    return tz.TZDateTime(
-      tz.local,
-      locale.year,
-      locale.month,
-      locale.day,
-      locale.hour,
-    );
+    return [
+      for (final l in locales)
+        tz.TZDateTime(tz.local, l.year, l.month, l.day, l.hour),
+    ];
   }
 
   String _formatDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/'
       '${d.month.toString().padLeft(2, '0')}/'
       '${d.year}';
+
+  // ─── Outils de debug (écran Paramètres, visibles en debug uniquement —
+  // cf. `ReglagesSheet`) ─────────────────────────────────────────────────
+  //
+  // Servent à vérifier le rendu/canal/pipeline de planification sans
+  // attendre une vraie échéance de péremption (demande du 07/09/2026,
+  // suite au changement de règle "une notification -> un rappel quotidien").
+
+  /// Envoie immédiatement une notification de test (rendu, son, canal).
+  Future<void> envoyerNotificationTest() async {
+    await _assurerInitialisation();
+    await _plugin.show(
+      id: _idTestImmediat,
+      title: 'Notification de test',
+      body: 'Envoyée manuellement depuis Paramètres — aucune donnée réelle.',
+      notificationDetails: _details,
+    );
+  }
+
+  /// Programme une notification de test dans [delai], pour vérifier le
+  /// pipeline réel de planification (fuseau horaire, réveil de l'app par le
+  /// système). Écrase toute notification de test programmée précédente.
+  Future<void> programmerNotificationTest(Duration delai) async {
+    await _assurerInitialisation();
+    final quand = tz.TZDateTime.now(tz.local).add(delai);
+    await _plugin.zonedSchedule(
+      id: _idTestProgramme,
+      title: 'Notification de test (programmée)',
+      body: 'Programmée pour dans ${delai.inSeconds} s.',
+      scheduledDate: quand,
+      notificationDetails: _details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  /// Notifications actuellement en attente (réelles + tests confondus), pour
+  /// inspection — la plateforme ne renvoie ni la date ni l'heure programmée,
+  /// seulement id/titre/corps.
+  Future<List<PendingNotificationRequest>> notificationsProgrammees() async {
+    await _assurerInitialisation();
+    return _plugin.pendingNotificationRequests();
+  }
 }
