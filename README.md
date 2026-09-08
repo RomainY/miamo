@@ -1,17 +1,22 @@
 # Miamo
 
 Application mobile **offline-first** de gestion du frigo, de planification des
-repas et de liste de courses.
+repas et de liste de courses — avec suggestions de courses automatiques et
+statistiques anti-gaspi.
 
 - Pas de compte, pas de backend, pas de synchronisation : toutes les données
   vivent dans une base SQLite sur l'appareil.
 - Pleinement utilisable sans réseau. Un seul appel sortant facultatif existe
   (enrichissement d'un produit scanné via [Open Food
   Facts](https://world.openfoodfacts.org)), déclenché uniquement sur action
-  utilisateur et après consentement explicite (réglage réversible).
+  utilisateur et après consentement explicite (réglage réversible dans
+  Gestion → Réglages).
+- **v1.3.0**, en usage personnel et auprès de proches pour recueillir des
+  retours — pas de publication sur les stores à ce stade.
 
-Cible principale : Android. iOS / Web / Windows sont générés par le template mais
-non validés (les notifications ne sont configurées que pour Android).
+Cible principale : Android. **iOS est le prochain grand chantier** (non
+démarré) ; Web / Windows sont générés par le template mais non validés (les
+notifications ne sont configurées que pour Android).
 
 ---
 
@@ -96,10 +101,14 @@ lib/
 │   ├── database/          Drift : tables, base, migrations, seed
 │   └── repositories/      Toute la logique métier (1 repo par agrégat)
 ├── features/
-│   ├── frigo/ planification/ courses/
+│   ├── frigo/ planification/ courses/    Les 3 onglets principaux
 │   │   └── presentation/{pages,providers,widgets}
+│   ├── gestion/           Point d'entrée unique (icône ⚙) vers les écrans
+│   │                      secondaires ci-dessous, identique sur les 3 onglets
+│   ├── parametres/        Écran Réglages (suggestions, péremption, scan)
+│   └── statistiques/      Bilan anti-gaspi (consommé vs jeté, par mois)
 └── shared/
-    ├── services/          NotificationService (péremption)
+    ├── services/          NotificationService (péremption), scan, Open Food Facts
     ├── theme/  utils/  widgets/
 ```
 
@@ -108,11 +117,14 @@ Lecture réactive via les `Stream` de Drift exposés en `StreamProvider` ; écri
 impérative via `ref.read(xxxRepositoryProvider).methode(...)`, transactions dans
 les repositories.
 
-Détail complet : [`ARCHITECTURE.md`](ARCHITECTURE.md).
-Audit qualité / sécurité : [`AUDIT_REPORT.md`](AUDIT_REPORT.md).
-Roadmap post-MVP : [`../Docs/specs-app-frigo.md`](../Docs/specs-app-frigo.md#4-roadmap--fonctionnalités-et-style-à-venir-post-mvp)
-(prochain chantier : auto-génération de la liste de courses à partir des
-produits périmés/épuisés et des ingrédients manquants des plats planifiés).
+Détail complet, historique des évolutions par version : [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+Roadmap : les fonctionnalités prévues pour la v1 sont toutes livrées (v1.1
+scan de code-barres, v1.2 suggestions de courses + Réglages, v1.3
+statistiques anti-gaspi + navigation). Le prochain grand chantier est le
+**portage iOS** ; d'ici là, corrections de bugs et ajustements mineurs
+remontés par l'usage. Idées non planifiées : voir `../Docs/cahier-des-charges.md`
+§4.
 
 ### Modèle de données (10 tables)
 
@@ -137,7 +149,7 @@ Spécifications fonctionnelles et techniques détaillées : dossier `../Docs/`
   `test/unit/database/` (migrations, via `SchemaVerifier`).
 - Widget : `test/widget/` + `test/widget_test.dart` (démarrage de l'app).
 - Lancer : `flutter test` (ou `flutter test --coverage` puis ouvrir
-  `coverage/lcov.info`). 123 tests verts au dernier commit.
+  `coverage/lcov.info`). 162 tests verts au dernier commit.
 
 ---
 
