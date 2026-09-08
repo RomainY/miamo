@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/repositories/repas_planifie_repository.dart';
-import '../../../plus/presentation/pages/plus_page.dart';
+import '../../../gestion/presentation/pages/gestion_page.dart';
 import '../providers/planification_providers.dart';
 import '../widgets/calendar_view.dart';
 import '../widgets/day_planning_list.dart';
@@ -32,11 +32,11 @@ class _PlanificationPageState extends ConsumerState<PlanificationPage> {
         title: const Text('Planification'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_horiz),
-            tooltip: 'Plus',
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Gestion',
             onPressed: () => Navigator.of(
               context,
-            ).push(MaterialPageRoute(builder: (_) => const PlusPage())),
+            ).push(MaterialPageRoute(builder: (_) => const GestionPage())),
           ),
         ],
       ),

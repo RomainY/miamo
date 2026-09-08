@@ -10,14 +10,16 @@ import '../../../statistiques/presentation/pages/statistiques_page.dart';
 /// écran secondaire devient accessible en un tap depuis n'importe quel
 /// onglet, plutôt que dispersé (Catalogue sur Frigo, Mes plats sur
 /// Planification uniquement) ou enterré (Réglages, auparavant niché à
-/// l'intérieur du Catalogue).
-class PlusPage extends StatelessWidget {
-  const PlusPage({super.key});
+/// l'intérieur du Catalogue). Nommé "Gestion" (icône ⚙) depuis le
+/// 08/09/2026 — d'abord appelé "Plus" en interne, renommé côté UI à la
+/// demande de Romain.
+class GestionPage extends StatelessWidget {
+  const GestionPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Plus')),
+      appBar: AppBar(title: const Text('Gestion')),
       body: ListView(
         children: [
           _EntreeMenu(

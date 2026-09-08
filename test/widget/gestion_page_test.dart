@@ -7,12 +7,13 @@ import 'package:miamo/data/database/database_provider.dart';
 import '../unit/repositories/test_database.dart';
 
 /// Vérifie la réorganisation de navigation
-/// (`Docs/poc-anti-gaspi-et-navigation.md` §B.2) : un menu "Plus" identique
-/// sur les 3 onglets, Réglages remonté au même niveau que Catalogue/Mes
+/// (`Docs/poc-anti-gaspi-et-navigation.md` §B.2) : un menu "Gestion"
+/// (icône ⚙, appelé "Plus" en interne jusqu'au 08/09/2026) identique sur les
+/// 3 onglets, Réglages remonté au même niveau que Catalogue/Mes
 /// plats/Anti-gaspi (n'est plus niché dans Catalogue). Les icônes directes
 /// ⚙ (Catalogue, sur Frigo) et 📖 (Mes plats, sur Planification) ont été
-/// retirées une fois "Plus" en place (08/09/2026) : ces écrans ne sont plus
-/// accessibles que via "Plus".
+/// retirées une fois "Gestion" en place : ces écrans ne sont plus
+/// accessibles que via "Gestion".
 void main() {
   Future<ProviderContainer> pumpApp(WidgetTester tester) async {
     final container = ProviderContainer(
@@ -30,15 +31,18 @@ void main() {
     return container;
   }
 
+  Future<void> ouvrirGestion(WidgetTester tester) async {
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.settings_outlined).first);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets(
-    'l\'icône "Plus" de Frigo ouvre les 4 entrées attendues',
+    'l\'icône "Gestion" de Frigo ouvre les 4 entrées attendues',
     (tester) async {
       await pumpApp(tester);
+      await ouvrirGestion(tester);
 
-      await tester.tap(find.widgetWithIcon(IconButton, Icons.more_horiz).first);
-      await tester.pumpAndSettle();
-
-      expect(find.text('Plus'), findsOneWidget);
+      expect(find.text('Gestion'), findsOneWidget);
       expect(find.text('Gérer le catalogue'), findsOneWidget);
       expect(find.text('Mes plats'), findsOneWidget);
       expect(find.text('Statistiques anti-gaspi'), findsOneWidget);
@@ -47,13 +51,11 @@ void main() {
   );
 
   testWidgets(
-    'Réglages est accessible directement depuis "Plus", sans passer par '
+    'Réglages est accessible directement depuis "Gestion", sans passer par '
     'Catalogue',
     (tester) async {
       await pumpApp(tester);
-
-      await tester.tap(find.widgetWithIcon(IconButton, Icons.more_horiz).first);
-      await tester.pumpAndSettle();
+      await ouvrirGestion(tester);
       await tester.tap(find.text('Réglages'));
       await tester.pumpAndSettle();
 
@@ -66,23 +68,22 @@ void main() {
 
   testWidgets(
     'Frigo/Planification n\'affichent plus les icônes directes ⚙/📖 — '
-    'seule "Plus" reste',
+    'seule "Gestion" reste',
     (tester) async {
       await pumpApp(tester);
 
       expect(find.byTooltip('Gérer le catalogue'), findsNothing);
       expect(find.byTooltip('Mes plats'), findsNothing);
-      expect(find.widgetWithIcon(IconButton, Icons.more_horiz), findsWidgets);
+      expect(find.byTooltip('Gestion'), findsWidgets);
     },
   );
 
   testWidgets(
-    "Catalogue, atteint depuis \"Plus\", n'a plus de bouton Réglages imbriqué",
+    "Catalogue, atteint depuis \"Gestion\", n'a plus de bouton Réglages "
+    'imbriqué',
     (tester) async {
       await pumpApp(tester);
-
-      await tester.tap(find.widgetWithIcon(IconButton, Icons.more_horiz).first);
-      await tester.pumpAndSettle();
+      await ouvrirGestion(tester);
       await tester.tap(find.text('Gérer le catalogue'));
       await tester.pumpAndSettle();
 
@@ -96,9 +97,7 @@ void main() {
     'test)',
     (tester) async {
       await pumpApp(tester);
-
-      await tester.tap(find.widgetWithIcon(IconButton, Icons.more_horiz).first);
-      await tester.pumpAndSettle();
+      await ouvrirGestion(tester);
       await tester.tap(find.text('Statistiques anti-gaspi'));
       await tester.pumpAndSettle();
 

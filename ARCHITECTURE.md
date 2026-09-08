@@ -67,12 +67,16 @@
 >   v1.2) par mois calendaire — comptage de lignes consommé/jeté, taux de
 >   gaspillage, top produits jetés. Aucune nouvelle table (feature volontairement
 >   secondaire par rapport au cœur de l'app).
-> - **Navigation revue** : une icône « Plus » identique ajoutée aux 3 AppBars
->   (Frigo/Planification/Courses, `features/plus/presentation/pages/plus_page.dart`)
+> - **Navigation revue** : une icône « Gestion » (⚙, appelée « Plus » en
+>   interne jusqu'au 08/09/2026) identique ajoutée aux 3 AppBars
+>   (Frigo/Planification/Courses, `features/gestion/presentation/pages/gestion_page.dart`)
 >   ouvre une liste à 4 entrées (Catalogue, Mes plats, Statistiques anti-gaspi,
 >   Réglages). **Contredit la note v1.2 ci-dessus** : les Réglages ne sont plus
 >   nichés dans l'écran Catalogue (bouton 🎛 retiré de `gerer_catalogue_page.dart`),
->   ils deviennent `ReglagesPage`, une entrée de « Plus » à part entière.
+>   ils deviennent `ReglagesPage`, une entrée de « Gestion » à part entière.
+>   Les icônes directes Catalogue (Frigo, ⚙) et Mes plats (Planification, 📖),
+>   redondantes avec « Gestion », ont ensuite été retirées le même jour :
+>   chaque écran secondaire n'a plus qu'un seul chemin d'accès.
 > - Petit polish visuel pour coller aux maquettes (`Maquette/design-canvas/`) :
 >   `NavigationBarThemeData.indicatorColor` passé à `Colors.transparent` (la
 >   maquette n'affiche aucune pastille derrière l'onglet sélectionné).
