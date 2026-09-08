@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/repository_providers.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/action_feedback.dart';
+import '../../../plus/presentation/pages/plus_page.dart';
 import '../providers/frigo_providers.dart';
 import '../widgets/category_chips_bar.dart';
 import '../widgets/expiration_warning_banner.dart';
@@ -35,6 +36,13 @@ class FrigoPage extends ConsumerWidget {
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const GererCataloguePage()),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_horiz),
+            tooltip: 'Plus',
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const PlusPage())),
           ),
         ],
       ),

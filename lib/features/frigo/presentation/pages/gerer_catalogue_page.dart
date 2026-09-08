@@ -9,7 +9,6 @@ import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/utils/exceptions.dart';
 import '../../../../shared/widgets/action_feedback.dart';
 import '../../../../shared/widgets/nom_dialog.dart';
-import '../../../parametres/presentation/widgets/reglages_sheet.dart';
 import '../providers/frigo_providers.dart';
 import '../widgets/category_chips_bar.dart';
 import 'produit_form_sheet.dart';
@@ -18,6 +17,11 @@ import 'produit_form_sheet.dart';
 /// (cahier-des-charges.md §7.1 / §7.2 / §7.3). Simplifiée à la Phase 2 : pas
 /// de sélection d'icône dédiée pour catégories/zones, seul le nom est
 /// éditable (icônes par défaut conservées).
+///
+/// Les Réglages, auparavant nichés ici sous une icône 🎛 (2 niveaux de
+/// profondeur, invisibles depuis Planification/Courses), sont remontés au
+/// même niveau que ce catalogue dans le menu "Plus" — cf.
+/// `Docs/poc-anti-gaspi-et-navigation.md` §B.2.
 class GererCataloguePage extends StatelessWidget {
   const GererCataloguePage({super.key});
 
@@ -28,21 +32,6 @@ class GererCataloguePage extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Catalogue'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.tune),
-              tooltip: 'Réglages',
-              onPressed: () => showModalBottomSheet<void>(
-                context: context,
-                showDragHandle: true,
-                isScrollControlled: true,
-                builder: (_) => const FractionallySizedBox(
-                  heightFactor: 0.85,
-                  child: ReglagesSheet(),
-                ),
-              ),
-            ),
-          ],
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Produits'),

@@ -12,10 +12,25 @@ import '../../../../shared/utils/date_utils.dart';
 import '../../../courses/presentation/providers/courses_providers.dart';
 import '../../../frigo/presentation/widgets/reglage_recherche_en_ligne_tile.dart';
 
-/// Écran Paramètres (`Docs/poc-liste-courses-auto.md` §11) : regroupe tous
-/// les réglages applicatifs derrière le point d'entrée déjà existant
-/// (Frigo → Catalogue → icône 🎛 « Réglages », `gerer_catalogue_page.dart`) —
-/// pas de nouvel emplacement de navigation (§11.3).
+/// Écran Réglages — une des 4 entrées du menu "Plus"
+/// (`Docs/poc-anti-gaspi-et-navigation.md` §B.2), accessible depuis les 3
+/// onglets principaux. Remonté au même niveau que Catalogue/Mes plats/
+/// Anti-gaspi : auparavant niché à l'intérieur de l'écran Catalogue
+/// (`Docs/poc-liste-courses-auto.md` §11), ce qui le rendait invisible
+/// depuis Planification/Courses.
+class ReglagesPage extends StatelessWidget {
+  const ReglagesPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Réglages')),
+      body: const ReglagesSheet(),
+    );
+  }
+}
+
+/// Contenu de l'écran Réglages, regroupant tous les réglages applicatifs.
 class ReglagesSheet extends StatelessWidget {
   const ReglagesSheet({super.key});
 

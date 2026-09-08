@@ -59,6 +59,24 @@
 >   bandeau, notification) en deviennent la valeur de repli, la valeur réelle
 >   venant de `reglage` une fois réglée par l'utilisateur.
 > - `version: 1.1.0+2` → `1.2.0+3`.
+>
+> **Mise à jour (v1.3 — statistiques anti-gaspi + réorganisation de la
+> navigation, 08/09/2026 ; cf. `../Docs/poc-anti-gaspi-et-navigation.md`)** :
+> - Nouvelle feature `features/statistiques/` : `statistiques_anti_gaspi.dart`
+>   (pur) agrège `ProduitFrigoRepository.watchHistoriqueRecent` (déjà écrit en
+>   v1.2) par mois calendaire — comptage de lignes consommé/jeté, taux de
+>   gaspillage, top produits jetés. Aucune nouvelle table (feature volontairement
+>   secondaire par rapport au cœur de l'app).
+> - **Navigation revue** : une icône « Plus » identique ajoutée aux 3 AppBars
+>   (Frigo/Planification/Courses, `features/plus/presentation/pages/plus_page.dart`)
+>   ouvre une liste à 4 entrées (Catalogue, Mes plats, Statistiques anti-gaspi,
+>   Réglages). **Contredit la note v1.2 ci-dessus** : les Réglages ne sont plus
+>   nichés dans l'écran Catalogue (bouton 🎛 retiré de `gerer_catalogue_page.dart`),
+>   ils deviennent `ReglagesPage`, une entrée de « Plus » à part entière.
+> - Petit polish visuel pour coller aux maquettes (`Maquette/design-canvas/`) :
+>   `NavigationBarThemeData.indicatorColor` passé à `Colors.transparent` (la
+>   maquette n'affiche aucune pastille derrière l'onglet sélectionné).
+> - `version: 1.2.0+3` → `1.3.0+4`.
 
 ---
 

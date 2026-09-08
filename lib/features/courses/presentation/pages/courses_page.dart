@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/database/tables.dart';
+import '../../../plus/presentation/pages/plus_page.dart';
 import '../providers/courses_providers.dart';
 import '../widgets/article_course_tile.dart';
 import '../widgets/suggestions_section.dart';
@@ -19,7 +20,18 @@ class CoursesPage extends ConsumerWidget {
     final suggestions = ref.watch(suggestionsAffichablesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Courses')),
+      appBar: AppBar(
+        title: const Text('Courses'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_horiz),
+            tooltip: 'Plus',
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const PlusPage())),
+          ),
+        ],
+      ),
       body: articles.when(
         data: (liste) {
           if (liste.isEmpty && suggestions.isEmpty) {

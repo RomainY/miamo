@@ -150,7 +150,10 @@ ThemeData buildAppTheme() {
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: AppColors.surface,
-      indicatorColor: AppColors.accent.withValues(alpha: 0.12),
+      // La maquette (Main/Planification/Courses.dc.html) n'affiche aucune
+      // pastille derrière l'icône sélectionnée, juste un changement de
+      // couleur — cf. Docs/poc-anti-gaspi-et-navigation.md §B.4.
+      indicatorColor: Colors.transparent,
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
         final selected = states.contains(WidgetState.selected);
         return TextStyle(
