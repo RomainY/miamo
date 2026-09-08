@@ -10,7 +10,6 @@ import '../widgets/category_chips_bar.dart';
 import '../widgets/expiration_warning_banner.dart';
 import '../widgets/product_list_tile.dart';
 import 'ajouter_produit_sheet.dart';
-import 'gerer_catalogue_page.dart';
 import 'modifier_instance_sheet.dart';
 
 /// Écran principal du module Frigo (cahier-des-charges.md §3.1) : liste des
@@ -30,13 +29,6 @@ class FrigoPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Frigo'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Gérer le catalogue',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const GererCataloguePage()),
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.more_horiz),
             tooltip: 'Plus',

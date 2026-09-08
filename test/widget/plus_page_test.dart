@@ -9,7 +9,10 @@ import '../unit/repositories/test_database.dart';
 /// Vérifie la réorganisation de navigation
 /// (`Docs/poc-anti-gaspi-et-navigation.md` §B.2) : un menu "Plus" identique
 /// sur les 3 onglets, Réglages remonté au même niveau que Catalogue/Mes
-/// plats/Anti-gaspi (n'est plus niché dans Catalogue).
+/// plats/Anti-gaspi (n'est plus niché dans Catalogue). Les icônes directes
+/// ⚙ (Catalogue, sur Frigo) et 📖 (Mes plats, sur Planification) ont été
+/// retirées une fois "Plus" en place (08/09/2026) : ces écrans ne sont plus
+/// accessibles que via "Plus".
 void main() {
   Future<ProviderContainer> pumpApp(WidgetTester tester) async {
     final container = ProviderContainer(
@@ -62,11 +65,25 @@ void main() {
   );
 
   testWidgets(
-    "l'icône ⚙ de Catalogue n'ouvre plus de bouton Réglages imbriqué",
+    'Frigo/Planification n\'affichent plus les icônes directes ⚙/📖 — '
+    'seule "Plus" reste',
     (tester) async {
       await pumpApp(tester);
 
-      await tester.tap(find.byTooltip('Gérer le catalogue'));
+      expect(find.byTooltip('Gérer le catalogue'), findsNothing);
+      expect(find.byTooltip('Mes plats'), findsNothing);
+      expect(find.widgetWithIcon(IconButton, Icons.more_horiz), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    "Catalogue, atteint depuis \"Plus\", n'a plus de bouton Réglages imbriqué",
+    (tester) async {
+      await pumpApp(tester);
+
+      await tester.tap(find.widgetWithIcon(IconButton, Icons.more_horiz).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Gérer le catalogue'));
       await tester.pumpAndSettle();
 
       expect(find.text('Catalogue'), findsOneWidget);

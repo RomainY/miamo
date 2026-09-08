@@ -7,7 +7,6 @@ import '../providers/planification_providers.dart';
 import '../widgets/calendar_view.dart';
 import '../widgets/day_planning_list.dart';
 import 'planifier_repas_sheet.dart';
-import 'plats_page.dart';
 
 DateTime _sansHeure(DateTime d) => DateTime(d.year, d.month, d.day);
 
@@ -32,13 +31,6 @@ class _PlanificationPageState extends ConsumerState<PlanificationPage> {
       appBar: AppBar(
         title: const Text('Planification'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.menu_book_outlined),
-            tooltip: 'Mes plats',
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const PlatsPage())),
-          ),
           IconButton(
             icon: const Icon(Icons.more_horiz),
             tooltip: 'Plus',
