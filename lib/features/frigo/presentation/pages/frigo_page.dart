@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../data/database/tables.dart';
 import '../../../../data/repositories/repository_providers.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/action_feedback.dart';
@@ -93,6 +94,15 @@ class FrigoPage extends ConsumerWidget {
                         ref,
                         detail.instance.id,
                       ),
+                      onRetirerUn: detail.produit.typeGrandeur ==
+                              TypeGrandeur.unite
+                          ? () => lancerAction(
+                              context,
+                              () => ref
+                                  .read(produitFrigoRepositoryProvider)
+                                  .retirerUn(detail.instance.id),
+                            )
+                          : null,
                     );
                   },
                 );

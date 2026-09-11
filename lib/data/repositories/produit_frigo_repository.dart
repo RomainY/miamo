@@ -190,6 +190,31 @@ class ProduitFrigoRepository extends BaseRepository {
   Future<void> marquerJete(int id) =>
       _marquerStatut(id, StatutProduitFrigo.jete);
 
+  /// Retire 1 du stock d'une instance comptée à l'unité (ex. « yaourts x6 ») —
+  /// raccourci pour ne pas rouvrir "Modifier" à chaque fois, une pression =
+  /// -1 (demande du 11/09/2026). Si la quantité atteint 0, l'instance passe
+  /// automatiquement à `consomme` (comme `marquerConsomme`, alimente les
+  /// statistiques anti-gaspi) plutôt que de laisser une ligne à 0 en stock.
+  Future<void> retirerUn(int id) async {
+    await db.transaction(() async {
+      final instance = await getById(id);
+      final restant = instance.quantite - 1;
+      if (restant <= 0) {
+        await (db.update(db.produitsFrigo)..where((t) => t.id.equals(id)))
+            .write(
+              ProduitsFrigoCompanion(
+                quantite: const Value(0),
+                statut: const Value(StatutProduitFrigo.consomme),
+                dateStatut: Value(DateTime.now()),
+              ),
+            );
+      } else {
+        await (db.update(db.produitsFrigo)..where((t) => t.id.equals(id)))
+            .write(ProduitsFrigoCompanion(quantite: Value(restant)));
+      }
+    });
+  }
+
   /// Suppression d'une ligne (correction d'erreur de saisie) : contrairement
   /// à consommé/jeté, n'alimente pas les statistiques anti-gaspi.
   Future<void> supprimerInstance(int id) async {

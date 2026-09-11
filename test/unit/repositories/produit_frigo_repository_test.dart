@@ -114,6 +114,42 @@ void main() {
     );
   });
 
+  group('retirerUn (raccourci -1, demande du 11/09/2026)', () {
+    test('décrémente la quantité d\'une unité sans changer de statut', () async {
+      final instance = await repo.create(
+        produitId: produitId,
+        zoneId: 1,
+        quantite: 6,
+        uniteId: 1,
+      );
+
+      await repo.retirerUn(instance.id);
+
+      final relue = await repo.getById(instance.id);
+      expect(relue.quantite, 5);
+      expect(relue.statut, StatutProduitFrigo.enStock);
+    });
+
+    test('à 0, passe automatiquement à consomme (dateStatut posée)', () async {
+      final instance = await repo.create(
+        produitId: produitId,
+        zoneId: 1,
+        quantite: 1,
+        uniteId: 1,
+      );
+
+      await repo.retirerUn(instance.id);
+
+      final relue = await repo.getById(instance.id);
+      expect(relue.quantite, 0);
+      expect(relue.statut, StatutProduitFrigo.consomme);
+      expect(relue.dateStatut, isNotNull);
+
+      final enStock = await repo.watchEnStock().first;
+      expect(enStock, isEmpty);
+    });
+  });
+
   group('watchHistoriqueRecent (poc-liste-courses-auto.md §3.2)', () {
     test('inclut consomme et jete, exclut une suppression directe', () async {
       final consomme = await repo.create(

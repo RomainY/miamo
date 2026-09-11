@@ -18,6 +18,12 @@ class ProductListTile extends StatelessWidget {
   final VoidCallback onJete;
   final VoidCallback onSupprimer;
 
+  /// `null` pour un produit dont le type de grandeur n'est pas "Nombre" —
+  /// retirer "1" d'une masse/volume stockée n'a pas de sens (ex. -1 g sur un
+  /// paquet de farine). Quand fourni, un tap = -1 immédiat, sans passer par
+  /// "Modifier" (demande du 11/09/2026 : rapide à répéter, ex. yaourts x6).
+  final VoidCallback? onRetirerUn;
+
   const ProductListTile({
     super.key,
     required this.detail,
@@ -25,6 +31,7 @@ class ProductListTile extends StatelessWidget {
     required this.onConsomme,
     required this.onJete,
     required this.onSupprimer,
+    this.onRetirerUn,
   });
 
   @override
@@ -39,6 +46,12 @@ class ProductListTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (onRetirerUn != null)
+            IconButton(
+              icon: const Icon(Icons.remove_circle_outline),
+              tooltip: 'Retirer 1',
+              onPressed: onRetirerUn,
+            ),
           UrgenceIndicator(datePeremption: detail.instance.datePeremption),
           PopupMenuButton<String>(
             onSelected: (action) {
