@@ -127,6 +127,18 @@ class ProduitFrigoRepository extends BaseRepository {
     )..where((t) => t.id.equals(id))).getSingle();
   }
 
+  /// Dernière instance ajoutée pour ce produit (tous statuts confondus), pour
+  /// préremplir quantité/unité/durée de conservation typique lors d'un
+  /// nouvel ajout (scan ou sélection dans le catalogue). `null` si le produit
+  /// n'a jamais été ajouté.
+  Future<ProduitFrigo?> getDerniereInstance(int produitId) {
+    return (db.select(db.produitsFrigo)
+          ..where((t) => t.produitId.equals(produitId))
+          ..orderBy([(t) => OrderingTerm.desc(t.dateAjout)])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   /// Ajoute une instance en zone (chemin A ou B de
   /// documentation-technique.md §3 "Flux d'ajout d'un ProduitFrigo") et
   /// remonte le produit dans l'autocomplétion.
@@ -189,6 +201,23 @@ class ProduitFrigoRepository extends BaseRepository {
 
   Future<void> marquerJete(int id) =>
       _marquerStatut(id, StatutProduitFrigo.jete);
+
+  /// Marque le début de consommation (ex. produit ouvert) — alimente le
+  /// badge "ouvert depuis" et la notification d'approche de limite de
+  /// consommation (cf. `dateOuverture` dans `tables.dart`).
+  Future<void> marquerEntame(int id) async {
+    await (db.update(db.produitsFrigo)..where((t) => t.id.equals(id))).write(
+      ProduitsFrigoCompanion(dateOuverture: Value(DateTime.now())),
+    );
+  }
+
+  /// Annule le marquage "entamé" (erreur de saisie) — n'affecte ni le statut
+  /// ni la date de péremption, seulement le suivi d'ouverture.
+  Future<void> annulerEntame(int id) async {
+    await (db.update(db.produitsFrigo)..where((t) => t.id.equals(id))).write(
+      const ProduitsFrigoCompanion(dateOuverture: Value(null)),
+    );
+  }
 
   /// Retire 1 du stock d'une instance comptée à l'unité (ex. « yaourts x6 ») —
   /// raccourci pour ne pas rouvrir "Modifier" à chaque fois, une pression =

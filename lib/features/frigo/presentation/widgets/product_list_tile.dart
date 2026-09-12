@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../data/repositories/produit_frigo_repository.dart';
+import 'ouverture_indicator.dart';
 import 'urgence_indicator.dart';
 
 /// Formate une quantité sans décimale inutile (ex. 2.0 -> "2", 1.5 -> "1.5").
@@ -18,6 +19,13 @@ class ProductListTile extends StatelessWidget {
   final VoidCallback onJete;
   final VoidCallback onSupprimer;
 
+  /// Bascule du marquage "entamé" (v1.4) : `onEntame` pose la date
+  /// d'ouverture à maintenant, `onAnnulerEntame` la retire (erreur de
+  /// saisie). Lequel des deux est proposé dépend de
+  /// `detail.instance.dateOuverture`.
+  final VoidCallback onEntame;
+  final VoidCallback onAnnulerEntame;
+
   /// `null` pour un produit dont le type de grandeur n'est pas "Nombre" —
   /// retirer "1" d'une masse/volume stockée n'a pas de sens (ex. -1 g sur un
   /// paquet de farine). Quand fourni, un tap = -1 immédiat, sans passer par
@@ -31,11 +39,14 @@ class ProductListTile extends StatelessWidget {
     required this.onConsomme,
     required this.onJete,
     required this.onSupprimer,
+    required this.onEntame,
+    required this.onAnnulerEntame,
     this.onRetirerUn,
   });
 
   @override
   Widget build(BuildContext context) {
+    final entame = detail.instance.dateOuverture != null;
     return ListTile(
       onTap: onModifier,
       title: Text(detail.produit.nom),
@@ -52,12 +63,17 @@ class ProductListTile extends StatelessWidget {
               tooltip: 'Retirer 1',
               onPressed: onRetirerUn,
             ),
+          OuvertureIndicator(dateOuverture: detail.instance.dateOuverture),
           UrgenceIndicator(datePeremption: detail.instance.datePeremption),
           PopupMenuButton<String>(
             onSelected: (action) {
               switch (action) {
                 case 'modifier':
                   onModifier();
+                case 'entame':
+                  onEntame();
+                case 'annuler_entame':
+                  onAnnulerEntame();
                 case 'consomme':
                   onConsomme();
                 case 'jete':
@@ -66,12 +82,24 @@ class ProductListTile extends StatelessWidget {
                   onSupprimer();
               }
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'modifier', child: Text('Modifier')),
-              PopupMenuItem(value: 'consomme', child: Text('Marquer consommé')),
-              PopupMenuItem(value: 'jete', child: Text('Marquer jeté')),
-              PopupMenuDivider(),
-              PopupMenuItem(
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'modifier', child: Text('Modifier')),
+              entame
+                  ? const PopupMenuItem(
+                      value: 'annuler_entame',
+                      child: Text('Retirer « entamé »'),
+                    )
+                  : const PopupMenuItem(
+                      value: 'entame',
+                      child: Text('Marquer entamé'),
+                    ),
+              const PopupMenuItem(
+                value: 'consomme',
+                child: Text('Marquer consommé'),
+              ),
+              const PopupMenuItem(value: 'jete', child: Text('Marquer jeté')),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
                 value: 'supprimer',
                 child: Text('Supprimer (erreur de saisie)'),
               ),

@@ -158,6 +158,16 @@ class ProduitsFrigo extends Table {
   /// Date du changement de statut (consommé/jeté), utilisée pour les
   /// statistiques anti-gaspi (hors MVP v1, cf. documentation-technique.md §5).
   DateTimeColumn get dateStatut => dateTime().nullable()();
+
+  /// Date à laquelle la consommation a commencé (ex. paquet ouvert), posée
+  /// manuellement par l'utilisateur (`marquerEntame`). `null` tant que
+  /// l'instance n'a pas été signalée comme entamée. Sert à calculer la date
+  /// limite de consommation une fois ouvert (`dateOuverture` + réglage
+  /// "durée de conservation après ouverture", identique pour tous les
+  /// produits pour le moment, cf. `reglage_repository.dart`) et à
+  /// déclencher une notification à l'approche de cette limite. Ajoutée par
+  /// la migration de schéma v4 → v5.
+  DateTimeColumn get dateOuverture => dateTime().nullable()();
 }
 
 /// Recette réutilisable : nom, temps de préparation, notes, portions par

@@ -20,3 +20,9 @@ const int seuilAlerteBandeauJours = 3;
 ///   consommé/jeté sur les [periodeRuptureJours] derniers jours.
 const int seuilFrequenceRupture = 3;
 const int periodeRuptureJours = 60;
+
+/// Durée de conservation par défaut une fois un produit marqué "entamé"
+/// (v1.4) — identique pour tous les produits pour le moment, pas de réglage
+/// par catégorie ou par produit. Réglable depuis l'écran Paramètres ; sert de
+/// valeur de repli tant que rien n'a été réglé.
+const int dureeConservationApresOuvertureJours = 3;

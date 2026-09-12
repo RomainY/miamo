@@ -1624,6 +1624,18 @@ class $ProduitsFrigoTable extends ProduitsFrigo
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _dateOuvertureMeta = const VerificationMeta(
+    'dateOuverture',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dateOuverture =
+      GeneratedColumn<DateTime>(
+        'date_ouverture',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1635,6 +1647,7 @@ class $ProduitsFrigoTable extends ProduitsFrigo
     datePeremption,
     statut,
     dateStatut,
+    dateOuverture,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1706,6 +1719,15 @@ class $ProduitsFrigoTable extends ProduitsFrigo
         dateStatut.isAcceptableOrUnknown(data['date_statut']!, _dateStatutMeta),
       );
     }
+    if (data.containsKey('date_ouverture')) {
+      context.handle(
+        _dateOuvertureMeta,
+        dateOuverture.isAcceptableOrUnknown(
+          data['date_ouverture']!,
+          _dateOuvertureMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1753,6 +1775,10 @@ class $ProduitsFrigoTable extends ProduitsFrigo
         DriftSqlType.dateTime,
         data['${effectivePrefix}date_statut'],
       ),
+      dateOuverture: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date_ouverture'],
+      ),
     );
   }
 
@@ -1780,6 +1806,16 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
   /// Date du changement de statut (consommé/jeté), utilisée pour les
   /// statistiques anti-gaspi (hors MVP v1, cf. documentation-technique.md §5).
   final DateTime? dateStatut;
+
+  /// Date à laquelle la consommation a commencé (ex. paquet ouvert), posée
+  /// manuellement par l'utilisateur (`marquerEntame`). `null` tant que
+  /// l'instance n'a pas été signalée comme entamée. Sert à calculer la date
+  /// limite de consommation une fois ouvert (`dateOuverture` + réglage
+  /// "durée de conservation après ouverture", identique pour tous les
+  /// produits pour le moment, cf. `reglage_repository.dart`) et à
+  /// déclencher une notification à l'approche de cette limite. Ajoutée par
+  /// la migration de schéma v4 → v5.
+  final DateTime? dateOuverture;
   const ProduitFrigo({
     required this.id,
     required this.produitId,
@@ -1790,6 +1826,7 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
     this.datePeremption,
     required this.statut,
     this.dateStatut,
+    this.dateOuverture,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1811,6 +1848,9 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
     if (!nullToAbsent || dateStatut != null) {
       map['date_statut'] = Variable<DateTime>(dateStatut);
     }
+    if (!nullToAbsent || dateOuverture != null) {
+      map['date_ouverture'] = Variable<DateTime>(dateOuverture);
+    }
     return map;
   }
 
@@ -1829,6 +1869,9 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
       dateStatut: dateStatut == null && nullToAbsent
           ? const Value.absent()
           : Value(dateStatut),
+      dateOuverture: dateOuverture == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dateOuverture),
     );
   }
 
@@ -1849,6 +1892,7 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
         serializer.fromJson<String>(json['statut']),
       ),
       dateStatut: serializer.fromJson<DateTime?>(json['dateStatut']),
+      dateOuverture: serializer.fromJson<DateTime?>(json['dateOuverture']),
     );
   }
   @override
@@ -1866,6 +1910,7 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
         $ProduitsFrigoTable.$converterstatut.toJson(statut),
       ),
       'dateStatut': serializer.toJson<DateTime?>(dateStatut),
+      'dateOuverture': serializer.toJson<DateTime?>(dateOuverture),
     };
   }
 
@@ -1879,6 +1924,7 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
     Value<DateTime?> datePeremption = const Value.absent(),
     StatutProduitFrigo? statut,
     Value<DateTime?> dateStatut = const Value.absent(),
+    Value<DateTime?> dateOuverture = const Value.absent(),
   }) => ProduitFrigo(
     id: id ?? this.id,
     produitId: produitId ?? this.produitId,
@@ -1891,6 +1937,9 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
         : this.datePeremption,
     statut: statut ?? this.statut,
     dateStatut: dateStatut.present ? dateStatut.value : this.dateStatut,
+    dateOuverture: dateOuverture.present
+        ? dateOuverture.value
+        : this.dateOuverture,
   );
   ProduitFrigo copyWithCompanion(ProduitsFrigoCompanion data) {
     return ProduitFrigo(
@@ -1907,6 +1956,9 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
       dateStatut: data.dateStatut.present
           ? data.dateStatut.value
           : this.dateStatut,
+      dateOuverture: data.dateOuverture.present
+          ? data.dateOuverture.value
+          : this.dateOuverture,
     );
   }
 
@@ -1921,7 +1973,8 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
           ..write('dateAjout: $dateAjout, ')
           ..write('datePeremption: $datePeremption, ')
           ..write('statut: $statut, ')
-          ..write('dateStatut: $dateStatut')
+          ..write('dateStatut: $dateStatut, ')
+          ..write('dateOuverture: $dateOuverture')
           ..write(')'))
         .toString();
   }
@@ -1937,6 +1990,7 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
     datePeremption,
     statut,
     dateStatut,
+    dateOuverture,
   );
   @override
   bool operator ==(Object other) =>
@@ -1950,7 +2004,8 @@ class ProduitFrigo extends DataClass implements Insertable<ProduitFrigo> {
           other.dateAjout == this.dateAjout &&
           other.datePeremption == this.datePeremption &&
           other.statut == this.statut &&
-          other.dateStatut == this.dateStatut);
+          other.dateStatut == this.dateStatut &&
+          other.dateOuverture == this.dateOuverture);
 }
 
 class ProduitsFrigoCompanion extends UpdateCompanion<ProduitFrigo> {
@@ -1963,6 +2018,7 @@ class ProduitsFrigoCompanion extends UpdateCompanion<ProduitFrigo> {
   final Value<DateTime?> datePeremption;
   final Value<StatutProduitFrigo> statut;
   final Value<DateTime?> dateStatut;
+  final Value<DateTime?> dateOuverture;
   const ProduitsFrigoCompanion({
     this.id = const Value.absent(),
     this.produitId = const Value.absent(),
@@ -1973,6 +2029,7 @@ class ProduitsFrigoCompanion extends UpdateCompanion<ProduitFrigo> {
     this.datePeremption = const Value.absent(),
     this.statut = const Value.absent(),
     this.dateStatut = const Value.absent(),
+    this.dateOuverture = const Value.absent(),
   });
   ProduitsFrigoCompanion.insert({
     this.id = const Value.absent(),
@@ -1984,6 +2041,7 @@ class ProduitsFrigoCompanion extends UpdateCompanion<ProduitFrigo> {
     this.datePeremption = const Value.absent(),
     this.statut = const Value.absent(),
     this.dateStatut = const Value.absent(),
+    this.dateOuverture = const Value.absent(),
   }) : produitId = Value(produitId),
        zoneId = Value(zoneId),
        quantite = Value(quantite),
@@ -1999,6 +2057,7 @@ class ProduitsFrigoCompanion extends UpdateCompanion<ProduitFrigo> {
     Expression<DateTime>? datePeremption,
     Expression<String>? statut,
     Expression<DateTime>? dateStatut,
+    Expression<DateTime>? dateOuverture,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2010,6 +2069,7 @@ class ProduitsFrigoCompanion extends UpdateCompanion<ProduitFrigo> {
       if (datePeremption != null) 'date_peremption': datePeremption,
       if (statut != null) 'statut': statut,
       if (dateStatut != null) 'date_statut': dateStatut,
+      if (dateOuverture != null) 'date_ouverture': dateOuverture,
     });
   }
 
@@ -2023,6 +2083,7 @@ class ProduitsFrigoCompanion extends UpdateCompanion<ProduitFrigo> {
     Value<DateTime?>? datePeremption,
     Value<StatutProduitFrigo>? statut,
     Value<DateTime?>? dateStatut,
+    Value<DateTime?>? dateOuverture,
   }) {
     return ProduitsFrigoCompanion(
       id: id ?? this.id,
@@ -2034,6 +2095,7 @@ class ProduitsFrigoCompanion extends UpdateCompanion<ProduitFrigo> {
       datePeremption: datePeremption ?? this.datePeremption,
       statut: statut ?? this.statut,
       dateStatut: dateStatut ?? this.dateStatut,
+      dateOuverture: dateOuverture ?? this.dateOuverture,
     );
   }
 
@@ -2069,6 +2131,9 @@ class ProduitsFrigoCompanion extends UpdateCompanion<ProduitFrigo> {
     if (dateStatut.present) {
       map['date_statut'] = Variable<DateTime>(dateStatut.value);
     }
+    if (dateOuverture.present) {
+      map['date_ouverture'] = Variable<DateTime>(dateOuverture.value);
+    }
     return map;
   }
 
@@ -2083,7 +2148,8 @@ class ProduitsFrigoCompanion extends UpdateCompanion<ProduitFrigo> {
           ..write('dateAjout: $dateAjout, ')
           ..write('datePeremption: $datePeremption, ')
           ..write('statut: $statut, ')
-          ..write('dateStatut: $dateStatut')
+          ..write('dateStatut: $dateStatut, ')
+          ..write('dateOuverture: $dateOuverture')
           ..write(')'))
         .toString();
   }
@@ -5860,6 +5926,7 @@ typedef $$ProduitsFrigoTableCreateCompanionBuilder =
       Value<DateTime?> datePeremption,
       Value<StatutProduitFrigo> statut,
       Value<DateTime?> dateStatut,
+      Value<DateTime?> dateOuverture,
     });
 typedef $$ProduitsFrigoTableUpdateCompanionBuilder =
     ProduitsFrigoCompanion Function({
@@ -5872,6 +5939,7 @@ typedef $$ProduitsFrigoTableUpdateCompanionBuilder =
       Value<DateTime?> datePeremption,
       Value<StatutProduitFrigo> statut,
       Value<DateTime?> dateStatut,
+      Value<DateTime?> dateOuverture,
     });
 
 final class $$ProduitsFrigoTableReferences
@@ -5971,6 +6039,11 @@ class $$ProduitsFrigoTableFilterComposer
 
   ColumnFilters<DateTime> get dateStatut => $composableBuilder(
     column: $table.dateStatut,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dateOuverture => $composableBuilder(
+    column: $table.dateOuverture,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6083,6 +6156,11 @@ class $$ProduitsFrigoTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get dateOuverture => $composableBuilder(
+    column: $table.dateOuverture,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ProduitsTableOrderingComposer get produitId {
     final $$ProduitsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -6181,6 +6259,11 @@ class $$ProduitsFrigoTableAnnotationComposer
 
   GeneratedColumn<DateTime> get dateStatut => $composableBuilder(
     column: $table.dateStatut,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get dateOuverture => $composableBuilder(
+    column: $table.dateOuverture,
     builder: (column) => column,
   );
 
@@ -6291,6 +6374,7 @@ class $$ProduitsFrigoTableTableManager
                 Value<DateTime?> datePeremption = const Value.absent(),
                 Value<StatutProduitFrigo> statut = const Value.absent(),
                 Value<DateTime?> dateStatut = const Value.absent(),
+                Value<DateTime?> dateOuverture = const Value.absent(),
               }) => ProduitsFrigoCompanion(
                 id: id,
                 produitId: produitId,
@@ -6301,6 +6385,7 @@ class $$ProduitsFrigoTableTableManager
                 datePeremption: datePeremption,
                 statut: statut,
                 dateStatut: dateStatut,
+                dateOuverture: dateOuverture,
               ),
           createCompanionCallback:
               ({
@@ -6313,6 +6398,7 @@ class $$ProduitsFrigoTableTableManager
                 Value<DateTime?> datePeremption = const Value.absent(),
                 Value<StatutProduitFrigo> statut = const Value.absent(),
                 Value<DateTime?> dateStatut = const Value.absent(),
+                Value<DateTime?> dateOuverture = const Value.absent(),
               }) => ProduitsFrigoCompanion.insert(
                 id: id,
                 produitId: produitId,
@@ -6323,6 +6409,7 @@ class $$ProduitsFrigoTableTableManager
                 datePeremption: datePeremption,
                 statut: statut,
                 dateStatut: dateStatut,
+                dateOuverture: dateOuverture,
               ),
           withReferenceMapper: (p0) => p0
               .map(

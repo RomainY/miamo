@@ -38,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -69,6 +69,9 @@ class AppDatabase extends _$AppDatabase {
   /// touche pas aux catégories déjà créées par l'utilisateur) — aide au
   /// classement des produits, notamment depuis le scan.
   /// Cf. `Docs/poc-scan-code-barres.md` §4 & §5.4.
+  ///
+  /// **v4 → v5** : ajout de `produit_frigo.date_ouverture` (nullable) — suivi
+  /// du temps écoulé depuis qu'un produit est entamé (v1.4).
   Future<void> _onUpgrade(Migrator m, int from, int to) async {
     for (var palier = from; palier < to; palier++) {
       switch (palier) {
@@ -84,6 +87,8 @@ class AppDatabase extends _$AppDatabase {
               mode: InsertMode.insertOrIgnore,
             );
           }
+        case 4:
+          await m.addColumn(produitsFrigo, produitsFrigo.dateOuverture);
       }
     }
   }

@@ -41,6 +41,12 @@ const kReglageJoursAvantNotification = 'jours_avant_notification';
 /// Heure (0-23) de déclenchement de la notification de péremption.
 const kReglageHeureNotification = 'heure_notification';
 
+/// Durée de conservation (jours) une fois un produit marqué "entamé" (v1.4),
+/// identique pour tous les produits pour le moment. Min 1 (0 n'a pas de
+/// sens : le produit serait aussitôt à consommer).
+const kReglageDureeConservationApresOuvertureJours =
+    'duree_conservation_apres_ouverture_jours';
+
 /// Accès aux réglages applicatifs simples (table `reglage`, clé/valeur texte).
 class ReglageRepository extends BaseRepository {
   const ReglageRepository(super.db);

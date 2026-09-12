@@ -99,6 +99,18 @@ class ReglagesSheet extends StatelessWidget {
             max: 23,
           ),
           const Divider(height: 24),
+          const _EnTete('Une fois ouvert'),
+          _ChampNombreReglage(
+            titre: 'Durée de conservation après ouverture',
+            sousTitre:
+                'Jours avant la limite de consommation, identique pour tous '
+                'les produits pour le moment.',
+            cle: kReglageDureeConservationApresOuvertureJours,
+            defaut: constantes.dureeConservationApresOuvertureJours,
+            min: 1,
+            max: 100,
+          ),
+          const Divider(height: 24),
           const _EnTete('Scan de produit'),
           const ReglageRechercheEnLigneTile(),
           if (kDebugMode) ...[

@@ -35,9 +35,11 @@ class NotificationService {
   );
 
   /// Identifiants réservés aux notifications de test, hors de la plage
-  /// utilisée par [_planifierPourInstance] (`instanceId * 1000 + offset`,
-  /// avec `instanceId` positif et `offset` borné par la fenêtre de rappel —
-  /// jamais assez grand pour les atteindre en usage réel).
+  /// utilisée par [_planifierPourInstance]/[_planifierOuverturePourInstance]
+  /// (`instanceId * 10000 + offset` pour la péremption, `+ 5000 + offset`
+  /// pour la limite après ouverture — `instanceId` positif et `offset`
+  /// toujours borné par la fenêtre de rappel, jamais assez grand pour
+  /// atteindre la plage voisine ni les identifiants de test).
   static const _idTestImmediat = 900000001;
   static const _idTestProgramme = 900000002;
 
@@ -80,6 +82,7 @@ class NotificationService {
     List<InstanceFrigoDetail> instances, {
     int joursAvant = joursAvantNotification,
     int heure = heureNotification,
+    int dureeConservationApresOuverture = dureeConservationApresOuvertureJours,
   }) async {
     try {
       await _assurerInitialisation();
@@ -87,14 +90,28 @@ class NotificationService {
 
       for (final detail in instances) {
         final datePeremption = detail.instance.datePeremption;
-        if (datePeremption == null) continue;
-        await _planifierPourInstance(
-          instanceId: detail.instance.id,
-          produitNom: detail.produit.nom,
-          datePeremption: datePeremption,
-          joursAvant: joursAvant,
-          heure: heure,
-        );
+        if (datePeremption != null) {
+          await _planifierPourInstance(
+            instanceId: detail.instance.id,
+            produitNom: detail.produit.nom,
+            datePeremption: datePeremption,
+            joursAvant: joursAvant,
+            heure: heure,
+          );
+        }
+
+        final dateOuverture = detail.instance.dateOuverture;
+        if (dateOuverture != null) {
+          await _planifierOuverturePourInstance(
+            instanceId: detail.instance.id,
+            produitNom: detail.produit.nom,
+            dateLimite: dateOuverture.add(
+              Duration(days: dureeConservationApresOuverture),
+            ),
+            joursAvant: joursAvant,
+            heure: heure,
+          );
+        }
       }
     } catch (e, stack) {
       developer.log(
@@ -107,7 +124,7 @@ class NotificationService {
   }
 
   /// Programme un rappel par jour (cf. note de tête de fichier) : un
-  /// identifiant distinct par jour de la fenêtre (`instanceId * 1000 +
+  /// identifiant distinct par jour de la fenêtre (`instanceId * 10000 +
   /// offset`) puisqu'une seule instance peut désormais porter plusieurs
   /// notifications programmées simultanément.
   Future<void> _planifierPourInstance({
@@ -125,9 +142,40 @@ class NotificationService {
 
     for (var offset = 0; offset < declenchements.length; offset++) {
       await _plugin.zonedSchedule(
-        id: instanceId * 1000 + offset,
+        id: instanceId * 10000 + offset,
         title: 'Ça périme bientôt',
         body: '$produitNom périme le ${_formatDate(datePeremption)}.',
+        scheduledDate: declenchements[offset],
+        notificationDetails: _details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    }
+  }
+
+  /// Même principe que [_planifierPourInstance], pour la limite de
+  /// consommation d'un produit entamé (`dateLimite` = date d'ouverture +
+  /// durée de conservation réglée). Plage d'identifiants distincte
+  /// (`+ 5000`) pour ne jamais entrer en conflit avec les rappels de
+  /// péremption d'une même instance.
+  Future<void> _planifierOuverturePourInstance({
+    required int instanceId,
+    required String produitNom,
+    required DateTime dateLimite,
+    required int joursAvant,
+    required int heure,
+  }) async {
+    final declenchements = _datesDeclenchement(
+      dateLimite,
+      joursAvant: joursAvant,
+      heure: heure,
+    );
+
+    for (var offset = 0; offset < declenchements.length; offset++) {
+      await _plugin.zonedSchedule(
+        id: instanceId * 10000 + 5000 + offset,
+        title: 'Produit entamé à consommer',
+        body: '$produitNom est ouvert depuis un moment — à consommer avant '
+            'le ${_formatDate(dateLimite)}.',
         scheduledDate: declenchements[offset],
         notificationDetails: _details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

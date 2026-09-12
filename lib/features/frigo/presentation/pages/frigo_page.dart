@@ -94,6 +94,18 @@ class FrigoPage extends ConsumerWidget {
                         ref,
                         detail.instance.id,
                       ),
+                      onEntame: () => lancerAction(
+                        context,
+                        () => ref
+                            .read(produitFrigoRepositoryProvider)
+                            .marquerEntame(detail.instance.id),
+                      ),
+                      onAnnulerEntame: () => lancerAction(
+                        context,
+                        () => ref
+                            .read(produitFrigoRepositoryProvider)
+                            .annulerEntame(detail.instance.id),
+                      ),
                       onRetirerUn: detail.produit.typeGrandeur ==
                               TypeGrandeur.unite
                           ? () => lancerAction(

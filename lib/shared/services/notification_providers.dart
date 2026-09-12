@@ -23,8 +23,15 @@ final notificationSyncProvider = Provider<void>((ref) {
       joursAvantNotification;
   final heure =
       ref.watch(heureNotificationProvider).valueOrNull ?? heureNotification;
+  final dureeConservationApresOuverture =
+      ref.watch(dureeConservationApresOuvertureJoursProvider).valueOrNull ??
+      dureeConservationApresOuvertureJours;
   instances.whenData(
-    (liste) =>
-        service.resynchroniser(liste, joursAvant: joursAvant, heure: heure),
+    (liste) => service.resynchroniser(
+      liste,
+      joursAvant: joursAvant,
+      heure: heure,
+      dureeConservationApresOuverture: dureeConservationApresOuverture,
+    ),
   );
 });

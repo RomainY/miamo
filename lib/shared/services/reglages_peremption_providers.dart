@@ -34,3 +34,14 @@ final heureNotificationProvider = StreamProvider<int>((ref) {
         defaut: constantes.heureNotification,
       );
 });
+
+final dureeConservationApresOuvertureJoursProvider = StreamProvider<int>((
+  ref,
+) {
+  return ref
+      .watch(reglageRepositoryProvider)
+      .observerInt(
+        kReglageDureeConservationApresOuvertureJours,
+        defaut: constantes.dureeConservationApresOuvertureJours,
+      );
+});

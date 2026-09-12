@@ -213,7 +213,7 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
                       width: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Ajouter au frigo'),
+                  : Text(_libelleBoutonValider(zones.valueOrNull)),
             ),
           ],
         ),
@@ -243,11 +243,26 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
             child: produits.when(
               data: (liste) {
                 final recherche = _rechercheController.text.toLowerCase();
-                final filtres = recherche.isEmpty
-                    ? liste
+                var filtres = recherche.isEmpty
+                    ? List<Produit>.of(liste)
                     : liste
                           .where((p) => p.nom.toLowerCase().contains(recherche))
                           .toList();
+                // Le produit déjà sélectionné (ex. reconnu par le scan) doit
+                // rester visible immédiatement, sans que l'utilisateur ait à
+                // faire défiler la liste pour le retrouver.
+                final selectionneId = _produitSelectionne?.id;
+                if (selectionneId != null) {
+                  final selectionne = filtres.firstWhereOrNull(
+                    (p) => p.id == selectionneId,
+                  );
+                  if (selectionne != null) {
+                    filtres = [
+                      selectionne,
+                      ...filtres.where((p) => p.id != selectionneId),
+                    ];
+                  }
+                }
                 if (filtres.isEmpty) {
                   return const Center(child: Text('Aucun produit trouvé'));
                 }
@@ -257,15 +272,26 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
                     final produit = filtres[i];
                     final selectionne = _produitSelectionne?.id == produit.id;
                     return ListTile(
-                      title: Text(produit.nom),
+                      title: Text(
+                        produit.nom,
+                        style: selectionne
+                            ? const TextStyle(fontWeight: FontWeight.bold)
+                            : null,
+                      ),
+                      tileColor: selectionne
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : null,
                       trailing: selectionne
                           ? const Icon(Icons.check_circle)
                           : null,
                       selected: selectionne,
-                      onTap: () => setState(() {
-                        _produitSelectionne = produit;
-                        _uniteId = produit.uniteDefautId;
-                      }),
+                      onTap: () async {
+                        setState(() {
+                          _produitSelectionne = produit;
+                          _uniteId = produit.uniteDefautId;
+                        });
+                        await _appliquerDerniereInstance(produit);
+                      },
                     );
                   },
                 );
@@ -473,6 +499,7 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
           _codeBarreScanne = null;
           _reconnaissance = ReconnaissanceProduit.catalogueLocal;
         });
+        await _appliquerDerniereInstance(existant);
         return;
       }
       if (existant != null) {
@@ -586,6 +613,23 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
     });
   }
 
+  /// Reprend la quantité et l'unité de la dernière instance ajoutée pour ce
+  /// produit, pour éviter de ressaisir des valeurs identiques à chaque
+  /// scan/ajout d'un produit déjà connu. La date de péremption n'est
+  /// volontairement pas reprise : trop dépendante du produit acheté cette
+  /// fois-ci pour être devinée. N'écrase rien si le produit n'a jamais été
+  /// ajouté.
+  Future<void> _appliquerDerniereInstance(Produit produit) async {
+    final derniere = await ref
+        .read(produitFrigoRepositoryProvider)
+        .getDerniereInstance(produit.id);
+    if (!mounted || derniere == null) return;
+    setState(() {
+      _quantiteController.text = _formatQuantite(derniere.quantite);
+      _uniteId = derniere.uniteId;
+    });
+  }
+
   static String _formatQuantite(double v) =>
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
@@ -614,6 +658,14 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
         });
       }
     }
+  }
+
+  /// Le libellé du bouton reprend le lieu de stockage choisi (ex. « Ajouter
+  /// dans « Congélateur » »), pour confirmer en un coup d'œil où l'instance
+  /// sera rangée avant de valider.
+  String _libelleBoutonValider(List<Zone>? zones) {
+    final nom = zones?.firstWhereOrNull((z) => z.id == _zoneId)?.nom;
+    return nom == null ? 'Ajouter au frigo' : 'Ajouter dans « $nom »';
   }
 
   bool _peutValider() {
