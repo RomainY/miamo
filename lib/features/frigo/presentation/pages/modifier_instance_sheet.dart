@@ -5,13 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../data/repositories/produit_frigo_repository.dart';
 import '../../../../data/repositories/repository_providers.dart';
 import '../../../../shared/utils/dropdown.dart';
+import '../../../../shared/utils/exceptions.dart';
 import '../../../../shared/utils/quantite.dart';
 import '../providers/frigo_providers.dart';
 import 'ajouter_produit_sheet.dart' show quantiteInputFormatters;
 
-/// Modifier une instance : quantité, date de péremption, changement de zone
-/// (cahier-des-charges.md §7.4). Le produit et l'unité (fixée à la création
-/// de l'instance) ne sont pas modifiables ici.
+/// Modifier une instance : nom du produit (catalogue), quantité, date de
+/// péremption, changement de zone (cahier-des-charges.md §7.4). L'unité
+/// (fixée à la création de l'instance) et le type de grandeur du produit ne
+/// sont pas modifiables ici — cf. `produit_form_sheet.dart` pour une édition
+/// complète du catalogue.
 Future<void> showModifierInstanceSheet(
   BuildContext context,
   InstanceFrigoDetail detail,
@@ -38,13 +41,18 @@ class _ModifierInstanceSheetState
   late int _zoneId = widget.detail.zone.id;
   late final int _uniteId = widget.detail.unite.id;
   late DateTime? _datePeremption = widget.detail.instance.datePeremption;
+  late final _nomController = TextEditingController(
+    text: widget.detail.produit.nom,
+  );
   late final _quantiteController = TextEditingController(
     text: formatQuantite(widget.detail.instance.quantite),
   );
   bool _envoiEnCours = false;
+  String? _erreur;
 
   @override
   void dispose() {
+    _nomController.dispose();
     _quantiteController.dispose();
     super.dispose();
   }
@@ -67,9 +75,11 @@ class _ModifierInstanceSheetState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            widget.detail.produit.nom,
+          TextField(
+            controller: _nomController,
             style: Theme.of(context).textTheme.titleLarge,
+            decoration: const InputDecoration(labelText: 'Nom du produit'),
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 16),
           zones.when(
@@ -133,9 +143,16 @@ class _ModifierInstanceSheetState
                 ),
             ],
           ),
+          if (_erreur != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _erreur!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: _envoiEnCours ? null : _valider,
+            onPressed: _envoiEnCours || !_peutValider() ? null : _valider,
             child: _envoiEnCours
                 ? const SizedBox(
                     height: 18,
@@ -149,20 +166,38 @@ class _ModifierInstanceSheetState
     );
   }
 
+  bool _peutValider() => _nomController.text.trim().isNotEmpty;
+
   Future<void> _valider() async {
     final quantite = parseQuantite(_quantiteController.text);
     if (quantite == null) return;
 
-    setState(() => _envoiEnCours = true);
-    await ref
-        .read(produitFrigoRepositoryProvider)
-        .update(
-          widget.detail.instance.id,
-          quantite: quantite,
-          zoneId: _zoneId,
-          uniteId: _uniteId,
-          datePeremption: Value(_datePeremption),
-        );
-    if (mounted) Navigator.of(context).pop();
+    setState(() {
+      _envoiEnCours = true;
+      _erreur = null;
+    });
+
+    try {
+      final nom = _nomController.text.trim();
+      if (nom != widget.detail.produit.nom) {
+        await ref
+            .read(produitRepositoryProvider)
+            .update(widget.detail.produit.id, nom: nom);
+      }
+      await ref
+          .read(produitFrigoRepositoryProvider)
+          .update(
+            widget.detail.instance.id,
+            quantite: quantite,
+            zoneId: _zoneId,
+            uniteId: _uniteId,
+            datePeremption: Value(_datePeremption),
+          );
+      if (mounted) Navigator.of(context).pop();
+    } on DuplicateNameException catch (e) {
+      if (mounted) setState(() => _erreur = e.message);
+    } finally {
+      if (mounted) setState(() => _envoiEnCours = false);
+    }
   }
 }

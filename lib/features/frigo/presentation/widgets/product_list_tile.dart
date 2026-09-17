@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../data/repositories/produit_frigo_repository.dart';
+import '../../../../shared/theme/app_theme.dart';
 import 'ouverture_indicator.dart';
 import 'urgence_indicator.dart';
 
@@ -49,6 +50,10 @@ class ProductListTile extends StatelessWidget {
     final entame = detail.instance.dateOuverture != null;
     return ListTile(
       onTap: onModifier,
+      leading: CircleAvatar(
+        backgroundColor: AppColors.categorieColor(detail.produit.categorieId),
+        radius: 6,
+      ),
       title: Text(detail.produit.nom),
       subtitle: Text(
         '${formatQuantite(detail.instance.quantite)} ${detail.unite.nom} '
@@ -63,8 +68,22 @@ class ProductListTile extends StatelessWidget {
               tooltip: 'Retirer 1',
               onPressed: onRetirerUn,
             ),
-          OuvertureIndicator(dateOuverture: detail.instance.dateOuverture),
-          UrgenceIndicator(datePeremption: detail.instance.datePeremption),
+          // L'indicateur d'ouverture passe sous la date de péremption
+          // (plutôt qu'à côté) pour ne pas élargir le bandeau au point de
+          // écraser le nom du produit (demande du 17/09/2026).
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              UrgenceIndicator(datePeremption: detail.instance.datePeremption),
+              if (entame) ...[
+                const SizedBox(height: 4),
+                OuvertureIndicator(
+                  dateOuverture: detail.instance.dateOuverture,
+                ),
+              ],
+            ],
+          ),
           PopupMenuButton<String>(
             onSelected: (action) {
               switch (action) {
