@@ -81,6 +81,27 @@
 >   `NavigationBarThemeData.indicatorColor` passé à `Colors.transparent` (la
 >   maquette n'affiche aucune pastille derrière l'onglet sélectionné).
 > - `version: 1.2.0+3` → `1.3.0+4`.
+>
+> **Mise à jour (v1.4 — suivi d'ouverture des produits entamés, 11–17/09/2026 ;
+> pas de POC dédié, itérée directement à l'usage)** :
+> - Nouvelle colonne `produit_frigo.date_ouverture` (nullable), migration
+>   **v4 → v5**, testée via `SchemaVerifier` comme les précédentes.
+>   `ProduitFrigoRepository.marquerEntame`/`annulerEntame` la posent/retirent ;
+>   `OuvertureIndicator` (nouveau widget) affiche « Ouvert depuis Xj » sous la
+>   pastille de péremption, coloré selon la proximité de
+>   `date_ouverture + duree_conservation_apres_ouverture_jours`.
+> - `ReglageRepository` : nouvelle clé
+>   `duree_conservation_apres_ouverture_jours` (défaut 3 jours), exposée dans
+>   `ReglagesSheet` sous « Une fois ouvert » — même mécanique que les seuils
+>   v1.2 (repli sur `shared/utils/constants.dart` tant que non réglée).
+> - `ProduitFrigoRepository.retirerUn` : raccourci pour les instances
+>   `type_grandeur = unite`, décrémente `quantite` de 1 depuis le Frigo sans
+>   ouvrir « Modifier » ; à 0, passage automatique à `consomme`. Exposé dans
+>   `ProductListTile` (icône `-`), conditionné au type de grandeur.
+> - Aucun nouveau point d'entrée navigation : ce suivi vit dans le menu `…`
+>   existant d'une ligne du Frigo et dans `ReglagesSheet`.
+> - `version` inchangée (`1.3.0+4`) : livré en petites touches successives
+>   plutôt qu'en bloc versionné à part — cf. `documentation-technique.md §5`.
 
 ---
 
@@ -455,17 +476,32 @@ unite (id, nom¹, typeGrandeur{masse|volume|unite}, facteurVersBase)
 ¹ = contrainte UNIQUE
 ```
 
+> Diagramme figé à l'état Phase 1 (audit initial) : ne montre pas la table
+> `reglage` (clé/valeur, v1.1), ni `produit.codeBarre` (v1.1), ni
+> `produit_frigo.dateOuverture` (v1.4) — cf. les notes « Mise à jour » en tête
+> de document et `../Docs/documentation-technique.md §2` pour le schéma
+> complet à jour.
+
 ---
 
 ## 8. Tests (état des lieux)
 
+> **Mise à jour (24/09/2026)** : ce tableau date de la Phase 1 (audit
+> initial, 8 fichiers, 36 tests). Le dossier a depuis grandi avec chaque
+> évolution (v1.1 → v1.4) ; état courant ci-dessous.
+
 | Type | Emplacement | Portée |
 |---|---|---|
-| Unitaires repositories | `test/unit/repositories/*` (8 fichiers, base `NativeDatabase.memory()`) | catégorie, zone, produit, produit_frigo, plat, repas_planifié, article_course — règles métier, cascades, protections, tri par urgence, décompte FIFO. |
-| Unitaires utils | `test/unit/utils/date_utils_test.dart` | déclenchement notification, `joursRestants`. |
-| Widget | `test/widget_test.dart` | démarrage de l'app, présence des 3 onglets (base en mémoire injectée). |
+| Unitaires repositories | `test/unit/repositories/*` (10 fichiers, base `NativeDatabase.memory()`) | catégorie, zone, produit, produit_frigo (dont entamé/`retirerUn`), plat, repas_planifié, article_course, reglage, unité — règles métier, cascades, protections, tri par urgence, décompte FIFO. |
+| Unitaires domain | `test/unit/domain/*` (3 fichiers) | suggestions de courses (v1.2), disponibilité des ingrédients, statistiques anti-gaspi (v1.3) — logique pure. |
+| Unitaires services | `test/unit/services/*` | mapping catégories Open Food Facts. |
+| Unitaires utils | `test/unit/utils/*` (5 fichiers) | déclenchement notification (rappel quotidien), `joursRestants`, quantités, tri. |
+| Unitaires database | `test/unit/database/*` | migrations de schéma via `SchemaVerifier` (v1 → v5). |
+| Widget | `test/widget/*` (6 fichiers) + `test/widget_test.dart` | démarrage de l'app, présence des 3 onglets, écran Réglages (dont les outils debug notifications). |
 | Intégration | — | **absent**. |
 
-`flutter analyze` : 0 issue. `flutter test` : **36/36 vert**.
-Zones non couvertes : `NotificationService`, tous les widgets/sheets, `app_theme`,
-providers Riverpod (composition des filtres).
+`flutter analyze` : 0 issue. `flutter test` : **167/167 vert** (dernière
+vérification le 24/09/2026, système Flutter local — pas de `.fvmrc`/FVM sur
+cette machine, cf. mémoire de session).
+Zones non couvertes : la plupart des widgets/sheets hors Réglages,
+`app_theme`, composition fine des providers Riverpod.

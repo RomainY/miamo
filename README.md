@@ -121,21 +121,23 @@ Détail complet, historique des évolutions par version : [`ARCHITECTURE.md`](AR
 
 Roadmap : les fonctionnalités prévues pour la v1 sont toutes livrées (v1.1
 scan de code-barres, v1.2 suggestions de courses + Réglages, v1.3
-statistiques anti-gaspi + navigation). Le prochain grand chantier est le
-**portage iOS** ; d'ici là, corrections de bugs et ajustements mineurs
-remontés par l'usage. Idées non planifiées : voir `../Docs/cahier-des-charges.md`
-§4.
+statistiques anti-gaspi + navigation, v1.4 suivi d'ouverture des produits
+entamés — livrée sans bump de version applicative). Le prochain grand
+chantier est le **portage iOS** ; d'ici là, corrections de bugs et
+ajustements mineurs remontés par l'usage. Idées non planifiées : voir
+`../Docs/cahier-des-charges.md` §4.
 
 ### Modèle de données (10 tables)
 
 `categorie`, `zone`, `unite`, `produit`, `produit_frigo`, `plat`,
 `plat_ingredient`, `repas_planifie`, `reglage`, `article_course`.
 
-Le schéma est en **version 4** (migrations couvertes par `SchemaVerifier`,
-snapshots dans `drift_schemas/`). Au premier lancement, un *seed* crée la zone
-racine « Frigo », les unités de base et un jeu de catégories courantes (dont
-les noms correspondent aux buckets Open Food Facts, pour une
-pré-sélection directe des produits scannés).
+Le schéma est en **version 5** (migrations couvertes par `SchemaVerifier`,
+snapshots dans `drift_schemas/`) — v5 ajoute `produit_frigo.date_ouverture`
+(suivi d'ouverture). Au premier lancement, un *seed* crée la zone racine
+« Frigo », les unités de base et un jeu de catégories courantes (dont les
+noms correspondent aux buckets Open Food Facts, pour une pré-sélection
+directe des produits scannés).
 
 Spécifications fonctionnelles et techniques détaillées : dossier `../Docs/`
 (`cahier-des-charges.md`, `documentation-technique.md`).
@@ -149,7 +151,7 @@ Spécifications fonctionnelles et techniques détaillées : dossier `../Docs/`
   `test/unit/database/` (migrations, via `SchemaVerifier`).
 - Widget : `test/widget/` + `test/widget_test.dart` (démarrage de l'app).
 - Lancer : `flutter test` (ou `flutter test --coverage` puis ouvrir
-  `coverage/lcov.info`). 162 tests verts au dernier commit.
+  `coverage/lcov.info`). 167 tests verts au dernier commit.
 
 ---
 
