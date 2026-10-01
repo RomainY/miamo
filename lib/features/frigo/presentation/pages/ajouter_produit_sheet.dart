@@ -18,6 +18,7 @@ import '../providers/frigo_providers.dart';
 import '../widgets/barcode_recognition_chip.dart';
 import '../widgets/barcode_scan_button.dart';
 import '../widgets/consentement_off_dialog.dart';
+import 'produit_form_sheet.dart';
 
 /// N'autorise que des chiffres et un séparateur décimal (`.` ou `,`) dans un
 /// champ de quantité.
@@ -282,7 +283,17 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
                           ? Theme.of(context).colorScheme.primaryContainer
                           : null,
                       trailing: selectionne
-                          ? const Icon(Icons.check_circle)
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined),
+                                  tooltip: 'Modifier le produit',
+                                  onPressed: () => _modifierProduit(produit),
+                                ),
+                                const Icon(Icons.check_circle),
+                              ],
+                            )
                           : null,
                       selected: selectionne,
                       onTap: () async {
@@ -610,6 +621,25 @@ class _AjouterProduitSheetState extends ConsumerState<_AjouterProduitSheet> {
             )
             ?.id;
       }
+    });
+  }
+
+  /// Ouvre la fiche produit complète (nom, catégorie, type de grandeur,
+  /// unité, code-barres — tout est éditable, cf. `produit_form_sheet.dart`)
+  /// pour corriger un produit reconnu par le scan ou choisi dans la
+  /// recherche, sans quitter l'ajout en cours (demande du 17/09/2026 : le
+  /// type de quantité déduit du scan peut être erroné). Resynchronise la
+  /// sélection locale après coup, le type/l'unité ayant pu changer.
+  Future<void> _modifierProduit(Produit produit) async {
+    await showProduitFormSheet(context, produit: produit);
+    if (!mounted) return;
+    final actuel = await ref
+        .read(produitRepositoryProvider)
+        .getById(produit.id);
+    if (!mounted) return;
+    setState(() {
+      _produitSelectionne = actuel;
+      _uniteId = actuel.uniteDefautId;
     });
   }
 

@@ -106,8 +106,13 @@ class ProduitRepository extends BaseRepository {
     return getById(id);
   }
 
-  /// `typeGrandeur` n'est volontairement pas modifiable ici (fixe après
-  /// création, cf. documentation-technique.md §2 "Produit").
+  /// `typeGrandeur` est modifiable (demande du 17/09/2026 : tout doit
+  /// pouvoir être corrigé sur un produit, y compris un type mal déduit d'un
+  /// scan). Changer le type n'affecte pas les instances déjà en stock
+  /// (`ProduitFrigo.uniteId` est indépendant, posé une fois pour toutes à
+  /// leur création) ; seules les nouvelles instances et `uniteDefautId`
+  /// doivent rester cohérentes avec le type à jour — d'où la vérification de
+  /// cohérence ci-dessous dès que l'un des deux change.
   ///
   /// `codeBarre` est tri-état : `Value.absent()` (défaut) = inchangé,
   /// `Value(null)` = code retiré, `Value('...')` = code posé/corrigé.
@@ -115,15 +120,19 @@ class ProduitRepository extends BaseRepository {
     int id, {
     String? nom,
     int? categorieId,
+    TypeGrandeur? typeGrandeur,
     int? uniteDefautId,
     Value<String?> codeBarre = const Value.absent(),
   }) async {
     if (nom != null) {
       await _verifierNomLibre(nom, exclureId: id);
     }
-    if (uniteDefautId != null) {
+    if (typeGrandeur != null || uniteDefautId != null) {
       final produit = await getById(id);
-      await _verifierCoherenceUnite(uniteDefautId, produit.typeGrandeur);
+      await _verifierCoherenceUnite(
+        uniteDefautId ?? produit.uniteDefautId,
+        typeGrandeur ?? produit.typeGrandeur,
+      );
     }
     if (codeBarre.present && codeBarre.value != null) {
       await _verifierCodeBarreLibre(codeBarre.value!, exclureId: id);
@@ -134,6 +143,9 @@ class ProduitRepository extends BaseRepository {
         categorieId: categorieId == null
             ? const Value.absent()
             : Value(categorieId),
+        typeGrandeur: typeGrandeur == null
+            ? const Value.absent()
+            : Value(typeGrandeur),
         uniteDefautId: uniteDefautId == null
             ? const Value.absent()
             : Value(uniteDefautId),

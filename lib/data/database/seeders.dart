@@ -22,11 +22,20 @@ const categoriesDeBase = <String>[
   'Surgelés',
 ];
 
+/// Zones créées par défaut en plus de la racine "Frigo" (`seedInitialData`),
+/// pour proposer directement les emplacements de stockage les plus courants
+/// sans configuration initiale. Renommables / supprimables comme n'importe
+/// quelle zone (Frigo reste la seule zone racine). Réinjectées dans les
+/// bases existantes par la migration v5 → v6 (`INSERT OR IGNORE`, cf.
+/// `app_database.dart`) — ne touche jamais aux zones déjà présentes.
+const zonesDeBase = <String>['Congélateur', 'Placard'];
+
 /// Seed exécuté une seule fois, à la création de la base (cf.
 /// documentation-technique.md §2) :
 /// - catégorie par défaut "Non classé" (réaffectation, non supprimable)
 ///   + les [categoriesDeBase] (renommables / supprimables)
 /// - zone racine "Frigo" (is_root = true, réaffectation, non supprimable)
+///   + les [zonesDeBase] (renommables / supprimables)
 /// - unités de base pour chaque type_grandeur
 Future<void> seedInitialData(AppDatabase db) async {
   await db
@@ -54,6 +63,12 @@ Future<void> seedInitialData(AppDatabase db) async {
           isRoot: Value(true),
         ),
       );
+
+  await db.batch((batch) {
+    batch.insertAll(db.zones, [
+      for (final nom in zonesDeBase) ZonesCompanion.insert(nom: nom),
+    ]);
+  });
 
   await db.batch((batch) {
     batch.insertAll(db.unites, const [

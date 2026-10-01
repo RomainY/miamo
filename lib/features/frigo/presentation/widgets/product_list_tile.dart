@@ -62,15 +62,10 @@ class ProductListTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (onRetirerUn != null)
-            IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
-              tooltip: 'Retirer 1',
-              onPressed: onRetirerUn,
-            ),
-          // L'indicateur d'ouverture passe sous la date de péremption
-          // (plutôt qu'à côté) pour ne pas élargir le bandeau au point de
-          // écraser le nom du produit (demande du 17/09/2026).
+          // Péremption, ouverture et "Retirer 1" sont empilés verticalement
+          // (plutôt qu'alignés à côté) pour garder la zone `trailing`
+          // étroite et laisser le maximum de largeur au nom du produit
+          // (demande du 17/09/2026 — le nom était trop écrasé).
           Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -82,6 +77,13 @@ class ProductListTile extends StatelessWidget {
                   dateOuverture: detail.instance.dateOuverture,
                 ),
               ],
+              if (onRetirerUn != null)
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  tooltip: 'Retirer 1',
+                  onPressed: onRetirerUn,
+                  visualDensity: VisualDensity.compact,
+                ),
             ],
           ),
           PopupMenuButton<String>(

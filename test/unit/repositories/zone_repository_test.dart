@@ -24,9 +24,9 @@ void main() {
   });
 
   test('create rejette un nom déjà utilisé', () async {
-    await repo.create(nom: 'Congélateur');
+    await repo.create(nom: 'Cave');
     expect(
-      () => repo.create(nom: 'Congélateur'),
+      () => repo.create(nom: 'Cave'),
       throwsA(isA<DuplicateNameException>()),
     );
   });
@@ -47,7 +47,7 @@ void main() {
   });
 
   test('delete réaffecte les instances vers la zone racine', () async {
-    final zone = await repo.create(nom: 'Congélateur');
+    final zone = await repo.create(nom: 'Cave');
     final produitId = await db
         .into(db.produits)
         .insert(

@@ -44,6 +44,27 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- flutter_local_notifications ne déclare plus ces receivers dans son
+             propre manifest (v22+) : sans eux, les notifications programmées
+             via `zonedSchedule` (péremption, limite après ouverture) n'ont
+             jamais d'endroit où atterrir quand l'alarme système se déclenche —
+             elles ne s'affichent donc jamais, même si la programmation en
+             elle-même n'a levé aucune erreur. La notification "Envoyer
+             maintenant" (immédiate, hors AlarmManager) fonctionnait malgré
+             cette lacune, ce qui la rendait difficile à repérer. -->
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

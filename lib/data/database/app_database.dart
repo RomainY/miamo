@@ -38,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -72,6 +72,10 @@ class AppDatabase extends _$AppDatabase {
   ///
   /// **v4 → v5** : ajout de `produit_frigo.date_ouverture` (nullable) — suivi
   /// du temps écoulé depuis qu'un produit est entamé (v1.4).
+  ///
+  /// **v5 → v6** : injection des [zonesDeBase] (`INSERT OR IGNORE`, ne
+  /// touche pas aux zones déjà créées par l'utilisateur, ni à "Frigo") —
+  /// évite une liste de zones vide au premier lancement post-mise à jour.
   Future<void> _onUpgrade(Migrator m, int from, int to) async {
     for (var palier = from; palier < to; palier++) {
       switch (palier) {
@@ -89,6 +93,13 @@ class AppDatabase extends _$AppDatabase {
           }
         case 4:
           await m.addColumn(produitsFrigo, produitsFrigo.dateOuverture);
+        case 5:
+          for (final nom in zonesDeBase) {
+            await into(zones).insert(
+              ZonesCompanion.insert(nom: nom),
+              mode: InsertMode.insertOrIgnore,
+            );
+          }
       }
     }
   }

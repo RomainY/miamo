@@ -13,8 +13,9 @@ import '../providers/frigo_providers.dart';
 import '../widgets/barcode_scan_button.dart';
 
 /// Création ou modification d'un `Produit` du catalogue (cahier-des-charges.md
-/// §7.3). En modification, `typeGrandeur` n'est pas éditable (fixé à la
-/// création, cf. produit_repository.dart).
+/// §7.3) — tous les champs sont éditables, y compris `typeGrandeur` (demande
+/// du 17/09/2026 ; cf. `produit_repository.dart` pour l'impact sur les
+/// instances déjà en stock).
 Future<void> showProduitFormSheet(BuildContext context, {Produit? produit}) {
   return showModalBottomSheet(
     context: context,
@@ -158,37 +159,35 @@ class _ProduitFormSheetState extends ConsumerState<_ProduitFormSheet> {
               error: (e, _) => Text('Erreur : $e'),
             ),
             const SizedBox(height: 12),
-            if (_modification) ...[
-              // Fixé à la création, non modifiable (cf. produit_repository.dart).
-              InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Type de grandeur',
+            SegmentedButton<TypeGrandeur>(
+              segments: const [
+                ButtonSegment(value: TypeGrandeur.masse, label: Text('Masse')),
+                ButtonSegment(
+                  value: TypeGrandeur.volume,
+                  label: Text('Volume'),
                 ),
-                child: Text(_libelleTypeGrandeur(_typeGrandeur)),
+                ButtonSegment(
+                  value: TypeGrandeur.unite,
+                  label: Text('Nombre'),
+                ),
+              ],
+              selected: {_typeGrandeur},
+              onSelectionChanged: (s) => setState(() {
+                _typeGrandeur = s.first;
+                _uniteId = null;
+              }),
+            ),
+            if (_modification && _typeGrandeur != widget.produit!.typeGrandeur)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Les instances déjà en stock gardent leur unité '
+                  "d'origine.",
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).hintColor,
+                  ),
+                ),
               ),
-            ] else ...[
-              SegmentedButton<TypeGrandeur>(
-                segments: const [
-                  ButtonSegment(
-                    value: TypeGrandeur.masse,
-                    label: Text('Masse'),
-                  ),
-                  ButtonSegment(
-                    value: TypeGrandeur.volume,
-                    label: Text('Volume'),
-                  ),
-                  ButtonSegment(
-                    value: TypeGrandeur.unite,
-                    label: Text('Nombre'),
-                  ),
-                ],
-                selected: {_typeGrandeur},
-                onSelectionChanged: (s) => setState(() {
-                  _typeGrandeur = s.first;
-                  _uniteId = null;
-                }),
-              ),
-            ],
             if (_typeGrandeur != TypeGrandeur.unite) ...[
               const SizedBox(height: 12),
               unites.when(
@@ -260,12 +259,6 @@ class _ProduitFormSheetState extends ConsumerState<_ProduitFormSheet> {
     );
   }
 
-  String _libelleTypeGrandeur(TypeGrandeur type) => switch (type) {
-    TypeGrandeur.masse => 'Masse',
-    TypeGrandeur.volume => 'Volume',
-    TypeGrandeur.unite => 'Nombre',
-  };
-
   bool _peutValider() {
     return _nomController.text.trim().isNotEmpty &&
         _categorieId != null &&
@@ -286,6 +279,7 @@ class _ProduitFormSheetState extends ConsumerState<_ProduitFormSheet> {
           widget.produit!.id,
           nom: _nomController.text.trim(),
           categorieId: _categorieId,
+          typeGrandeur: _typeGrandeur,
           uniteDefautId: _uniteId,
           codeBarre: Value(codeBarre),
         );
